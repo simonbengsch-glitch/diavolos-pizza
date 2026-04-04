@@ -17,330 +17,517 @@ const FAMILY_SAUCE_IMAGES: Record<string, string> = {
   "Frischkäse":   "/pizza/family-frischkaese.png",
 };
 
-// Alle 20 möglichen Positionen auf der Pizza (cx, cy in einem 400x400 Overlay)
+// Echte Käse-Bilder als Overlay (gleich für Mozzarella und veganen Käse)
+const CHEESE_IMAGES: Record<string, string> = {
+  "Tomatensauce": "/pizza/cheese-tomate.png",
+  "Ohne Sauce":   "/pizza/cheese-ohne-sauce.png",
+  "Pesto":        "/pizza/cheese-pesto.png",
+  "Frischkäse":   "/pizza/cheese-frischkaese.png",
+};
+
+// Pseudo-random basierend auf Koordinaten (deterministisch, kein Math.random)
+function seededRand(x: number, y: number, seed: number): number {
+  const n = Math.sin(x * 12.9898 + y * 78.233 + seed * 43758.5453) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+// Positionen enger am Zentrum (200,200), Radius ~100px – alles innerhalb der Pizza, nicht auf der Kruste
 const POSITIONS: [number, number][] = [
-  [200, 105], [278, 132], [318, 202], [282, 272],
-  [208, 308], [128, 278], [86, 205],  [122, 132],
-  [200, 162], [252, 178], [260, 240], [200, 258],
-  [148, 240], [144, 178], [200, 210], [232, 148],
-  [168, 148], [268, 212], [132, 212], [228, 262],
+  [200, 135], [248, 155], [270, 200], [248, 245],
+  [200, 268], [152, 245], [130, 200], [152, 155],
+  [200, 168], [232, 178], [240, 218], [218, 248],
+  [182, 248], [160, 218], [168, 178], [200, 200],
+  [216, 158], [244, 228], [156, 228], [184, 158],
 ];
 
-// Halb-Halb Positionen für runde Pizza (gespiegelt um x=200)
+// Halb-Halb Positionen (enger)
 const LEFT_POSITIONS: [number, number][] = [
-  [155, 100], [118, 142], [88, 200], [118, 258], [155, 300],
-  [138, 168], [162, 232], [104, 172], [104, 228], [155, 200],
+  [168, 135], [148, 168], [132, 200], [148, 232], [168, 265],
+  [155, 185], [162, 218], [140, 200], [175, 155], [160, 248],
 ];
 const RIGHT_POSITIONS: [number, number][] = [
-  [245, 100], [282, 142], [312, 200], [282, 258], [245, 300],
-  [262, 168], [238, 232], [296, 172], [296, 228], [245, 200],
+  [232, 135], [252, 168], [268, 200], [252, 232], [232, 265],
+  [245, 185], [238, 218], [260, 200], [225, 155], [240, 248],
 ];
 
-// Topping-Positionen für Familienpizza (verteilt über 600x400 ViewBox)
+// Familienpizza Positionen (enger zentriert in 600x400)
 const FAMILY_POSITIONS: [number, number][] = [
-  [100, 100], [200, 80],  [300, 100], [400, 80],  [500, 100],
-  [80,  200], [180, 180], [300, 200], [420, 180], [520, 200],
-  [100, 300], [200, 320], [300, 300], [400, 320], [500, 300],
-  [150, 150], [300, 280], [450, 150], [150, 250], [450, 250],
+  [150, 120], [230, 110], [300, 120], [370, 110], [450, 120],
+  [120, 200], [210, 190], [300, 200], [390, 190], [480, 200],
+  [150, 280], [230, 290], [300, 280], [370, 290], [450, 280],
+  [180, 160], [300, 250], [420, 160], [180, 240], [420, 240],
 ];
 
-// Halb-Halb Positionen für Familienpizza (Mitte bei x=300)
 const FAMILY_LEFT_POSITIONS: [number, number][] = [
-  [80, 80],  [140, 120], [210, 200], [140, 280], [80, 320],
-  [100, 160], [180, 240], [60, 200], [210, 120], [130, 200],
+  [120, 120], [165, 155], [200, 200], [165, 245], [120, 280],
+  [140, 175], [185, 225], [110, 200], [195, 145], [150, 200],
 ];
 const FAMILY_RIGHT_POSITIONS: [number, number][] = [
-  [520, 80],  [460, 120], [390, 200], [460, 280], [520, 320],
-  [500, 160], [420, 240], [540, 200], [390, 120], [470, 200],
+  [480, 120], [435, 155], [400, 200], [435, 245], [480, 280],
+  [460, 175], [415, 225], [490, 200], [405, 145], [450, 200],
 ];
 
-// Zutaten → visuelle Darstellung (SVG-Elemente als Overlay)
+
+// Zutaten → visuelle Darstellung – realistischer mit Variation
 const TOPPING_VISUALS: Record<string, {
   pieces: number;
-  render: (cx: number, cy: number, key: string) => React.ReactNode;
+  render: (cx: number, cy: number, key: string, idx: number) => React.ReactNode;
 }> = {
   "Salami": {
     pieces: 7,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx} cy={cy} r={13} fill="#8B1A1A" />
-        <circle cx={cx} cy={cy} r={8} fill="#A52A2A" />
-        <circle cx={cx - 4} cy={cy - 3} r={2} fill="#6B0000" />
-        <circle cx={cx + 3} cy={cy + 2} r={1.5} fill="#6B0000" />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 11 + seededRand(cx, cy, idx) * 4;
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <circle cx={cx} cy={cy} r={r} fill="#9B1B30" />
+          <circle cx={cx} cy={cy} r={r * 0.78} fill="#B22234" />
+          {/* Fettflecken */}
+          <circle cx={cx - r * 0.3} cy={cy - r * 0.25} r={r * 0.12} fill="#FFEEDD" opacity={0.6} />
+          <circle cx={cx + r * 0.25} cy={cy + r * 0.15} r={r * 0.09} fill="#FFEEDD" opacity={0.5} />
+          <circle cx={cx - r * 0.1} cy={cy + r * 0.3} r={r * 0.08} fill="#FFEEDD" opacity={0.4} />
+          <circle cx={cx + r * 0.35} cy={cy - r * 0.2} r={r * 0.07} fill="#FFEEDD" opacity={0.45} />
+          {/* Rand-Dunkelheit */}
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#7A1020" strokeWidth={0.8} opacity={0.5} />
+        </g>
+      );
+    },
   },
   "Mozzarella extra": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <ellipse key={key} cx={cx} cy={cy} rx={14} ry={10} fill="#FFFDE7" opacity={0.9}
-        style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.2))" }} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const rx = 12 + seededRand(cx, cy, idx) * 6;
+      const ry = 8 + seededRand(cx, cy, idx + 2) * 4;
+      const rot = seededRand(cx, cy, idx + 1) * 180;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#FFF8E1" opacity={0.85} />
+          <ellipse cx={cx} cy={cy} rx={rx * 0.6} ry={ry * 0.5} fill="#FFFEF5" opacity={0.6} />
+        </g>
+      );
+    },
   },
   "Hinterschinken": {
     pieces: 5,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={15} ry={9} fill="#DEB887" transform={`rotate(30 ${cx} ${cy})`} />
-        <ellipse cx={cx} cy={cy} rx={10} ry={6} fill="#CD853F" opacity={0.5} transform={`rotate(30 ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rx = 13 + seededRand(cx, cy, idx) * 5;
+      const ry = 7 + seededRand(cx, cy, idx + 2) * 4;
+      const rot = seededRand(cx, cy, idx + 1) * 180 - 90;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#E8B4A0" opacity={0.9} />
+          <ellipse cx={cx + 2} cy={cy - 1} rx={rx * 0.7} ry={ry * 0.6} fill="#D49880" opacity={0.5} />
+          <ellipse cx={cx - 3} cy={cy + 1} rx={rx * 0.4} ry={ry * 0.35} fill="#C28870" opacity={0.3} />
+        </g>
+      );
+    },
   },
   "Parmaschinken": {
     pieces: 4,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={16} ry={8} fill="#C9956B" transform={`rotate(-20 ${cx} ${cy})`} />
-        <ellipse cx={cx} cy={cy} rx={10} ry={5} fill="#A0522D" opacity={0.4} transform={`rotate(-20 ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rx = 15 + seededRand(cx, cy, idx) * 5;
+      const ry = 7 + seededRand(cx, cy, idx + 2) * 4;
+      const rot = seededRand(cx, cy, idx + 1) * 180 - 90;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#D4917A" opacity={0.85} />
+          <ellipse cx={cx} cy={cy} rx={rx * 0.5} ry={ry * 0.4} fill="#BF7A65" opacity={0.3} />
+          {/* Fettstreifen */}
+          <ellipse cx={cx + rx * 0.3} cy={cy} rx={rx * 0.2} ry={ry * 0.8} fill="#F5DDD5" opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Champignons": {
     pieces: 8,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy - 3} rx={11} ry={7} fill="#A0896A" />
-        <rect x={cx - 3} y={cy} width={6} height={7} rx={2} fill="#B8977A" />
-        <ellipse cx={cx} cy={cy - 3} rx={7} ry={4} fill="#BDA98A" opacity={0.6} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const scale = 0.8 + seededRand(cx, cy, idx) * 0.4;
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      return (
+        <g key={key} transform={`translate(${cx},${cy}) scale(${scale}) rotate(${rot})`}>
+          {/* Pilzkopf von oben – Scheibe */}
+          <ellipse cx={0} cy={0} rx={10} ry={7} fill="#C4A882" />
+          <ellipse cx={0} cy={0} rx={6} ry={4} fill="#D4BE9C" opacity={0.7} />
+          {/* Lamellen */}
+          <line x1={-5} y1={1} x2={5} y2={1} stroke="#A08060" strokeWidth={0.5} opacity={0.4} />
+          <line x1={-4} y1={3} x2={4} y2={3} stroke="#A08060" strokeWidth={0.5} opacity={0.3} />
+        </g>
+      );
+    },
   },
   "Oliven": {
     pieces: 9,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx} cy={cy} r={9} fill="#2F4F2F" />
-        <circle cx={cx} cy={cy} r={4} fill="#1A1A1A" />
-        <circle cx={cx} cy={cy} r={2} fill="#C8A850" />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 6 + seededRand(cx, cy, idx) * 3;
+      return (
+        <g key={key}>
+          {/* Olivenring von oben */}
+          <circle cx={cx} cy={cy} r={r} fill="#2C3E1F" />
+          <circle cx={cx} cy={cy} r={r * 0.55} fill="#1A2510" />
+          <circle cx={cx} cy={cy} r={r * 0.3} fill="#8B1A1A" opacity={0.3} />
+          {/* Glanz */}
+          <ellipse cx={cx - r * 0.2} cy={cy - r * 0.2} rx={r * 0.2} ry={r * 0.12} fill="white" opacity={0.15} />
+        </g>
+      );
+    },
   },
   "Peperoni": {
     pieces: 10,
-    render: (cx, cy, key) => (
-      <ellipse key={key} cx={cx} cy={cy} rx={14} ry={5} fill="#FF4500"
-        transform={`rotate(${(cx * cy) % 180} ${cx} ${cy})`}
-        style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.3))" }} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 180;
+      const len = 10 + seededRand(cx, cy, idx) * 6;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={len} ry={4} fill="#D4380D" />
+          <ellipse cx={cx} cy={cy} rx={len * 0.7} ry={2.5} fill="#E85D3A" opacity={0.5} />
+          {/* Samen */}
+          <circle cx={cx - 3} cy={cy} r={0.8} fill="#FFFDD0" opacity={0.6} />
+          <circle cx={cx + 2} cy={cy - 0.5} r={0.7} fill="#FFFDD0" opacity={0.5} />
+        </g>
+      );
+    },
   },
   "Paprika": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <rect x={cx - 8} y={cy - 4} width={16} height={8} rx={3}
-          fill={["#FF6347", "#FFD700", "#32CD32"][(Math.round(cx + cy)) % 3]}
-          transform={`rotate(${(Math.round(cx)) % 60 - 30} ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const colors = ["#CC2200", "#E6A800", "#228B22"];
+      const color = colors[Math.floor(seededRand(cx, cy, idx) * 3)];
+      const rot = seededRand(cx, cy, idx + 1) * 180 - 90;
+      const w = 14 + seededRand(cx, cy, idx + 2) * 4;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          {/* Paprikastreifen */}
+          <rect x={cx - w / 2} y={cy - 3.5} width={w} height={7} rx={3} fill={color} opacity={0.85} />
+          <rect x={cx - w / 2 + 1} y={cy - 2} width={w - 2} height={3} rx={1.5} fill="white" opacity={0.12} />
+        </g>
+      );
+    },
   },
   "Zwiebeln": {
     pieces: 8,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx} cy={cy} r={9} fill="none" stroke="#DEB887" strokeWidth={3} opacity={0.7} />
-        <circle cx={cx} cy={cy} r={4} fill="none" stroke="#DEB887" strokeWidth={2} opacity={0.5} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 7 + seededRand(cx, cy, idx) * 3;
+      const rot = seededRand(cx, cy, idx + 1) * 180;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          {/* Zwiebelring */}
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E8D5C0" strokeWidth={2.5} opacity={0.8} />
+          <circle cx={cx} cy={cy} r={r * 0.6} fill="none" stroke="#E8D5C0" strokeWidth={1.5} opacity={0.4} />
+          {/* Leichter Glanz */}
+          <ellipse cx={cx} cy={cy - r * 0.3} rx={r * 0.5} ry={r * 0.15} fill="white" opacity={0.1} />
+        </g>
+      );
+    },
   },
   "Spinat": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <ellipse key={key} cx={cx} cy={cy} rx={12} ry={7} fill="#2D6A2D" opacity={0.85}
-        transform={`rotate(${(Math.round(cx)) % 40} ${cx} ${cy})`} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      const scale = 0.8 + seededRand(cx, cy, idx) * 0.4;
+      return (
+        <g key={key} transform={`translate(${cx},${cy}) rotate(${rot}) scale(${scale})`}>
+          {/* Blattwellig */}
+          <ellipse cx={0} cy={-3} rx={9} ry={5} fill="#2D6B2D" opacity={0.85} />
+          <ellipse cx={0} cy={3} rx={7} ry={4} fill="#358535" opacity={0.75} />
+          {/* Blattader */}
+          <line x1={0} y1={-7} x2={0} y2={6} stroke="#1D4B1D" strokeWidth={0.6} opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Rucola": {
     pieces: 8,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx - 6} cy={cy} rx={7} ry={4} fill="#3A7D3A" opacity={0.9}
-          transform={`rotate(-20 ${cx} ${cy})`} />
-        <ellipse cx={cx + 6} cy={cy} rx={7} ry={4} fill="#4A8D4A" opacity={0.9}
-          transform={`rotate(20 ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      return (
+        <g key={key} transform={`translate(${cx},${cy}) rotate(${rot})`}>
+          <ellipse cx={-5} cy={-2} rx={7} ry={3} fill="#4A8E4A" opacity={0.9} transform="rotate(-25)" />
+          <ellipse cx={5} cy={-2} rx={7} ry={3} fill="#55A055" opacity={0.85} transform="rotate(25)" />
+          <ellipse cx={0} cy={3} rx={6} ry={2.5} fill="#3D7D3D" opacity={0.8} transform="rotate(5)" />
+        </g>
+      );
+    },
   },
   "Thunfisch": {
     pieces: 5,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={13} ry={8} fill="#F5DEB3" opacity={0.9}
-          transform={`rotate(${(Math.round(cx)) % 45} ${cx} ${cy})`} />
-        <ellipse cx={cx} cy={cy} rx={8} ry={5} fill="#E8C99A" opacity={0.6}
-          transform={`rotate(${(Math.round(cx)) % 45} ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 180;
+      const rx = 11 + seededRand(cx, cy, idx) * 5;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={rx * 0.6} fill="#C9A87C" opacity={0.85} />
+          <ellipse cx={cx + 2} cy={cy - 1} rx={rx * 0.6} ry={rx * 0.3} fill="#B8956A" opacity={0.4} />
+          {/* Faserige Textur */}
+          <line x1={cx - rx * 0.5} y1={cy} x2={cx + rx * 0.5} y2={cy} stroke="#A08050" strokeWidth={0.5} opacity={0.3} />
+          <line x1={cx - rx * 0.4} y1={cy + 2} x2={cx + rx * 0.4} y2={cy + 2} stroke="#A08050" strokeWidth={0.4} opacity={0.2} />
+        </g>
+      );
+    },
   },
   "Sardellen": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <ellipse key={key} cx={cx} cy={cy} rx={16} ry={4} fill="#4A3728" opacity={0.9}
-        transform={`rotate(${(Math.round(cx * 0.7)) % 60 - 30} ${cx} ${cy})`} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 180 - 90;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={14} ry={3} fill="#5A3D28" opacity={0.9} />
+          <ellipse cx={cx} cy={cy - 0.5} rx={10} ry={1.5} fill="#7A5D48" opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Lachs": {
     pieces: 4,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={15} ry={9} fill="#FA8072" opacity={0.85}
-          transform={`rotate(${(Math.round(cy)) % 30} ${cx} ${cy})`} />
-        <ellipse cx={cx} cy={cy} rx={9} ry={5} fill="#FF9A8A" opacity={0.5}
-          transform={`rotate(${(Math.round(cy)) % 30} ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 180 - 90;
+      const rx = 14 + seededRand(cx, cy, idx) * 4;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={rx * 0.55} fill="#FA8072" opacity={0.85} />
+          {/* Fettlinien */}
+          <line x1={cx - rx * 0.6} y1={cy - 2} x2={cx + rx * 0.6} y2={cy - 2} stroke="#FFB0A0" strokeWidth={1} opacity={0.5} />
+          <line x1={cx - rx * 0.5} y1={cy + 1.5} x2={cx + rx * 0.5} y2={cy + 1.5} stroke="#FFB0A0" strokeWidth={0.8} opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Mais": {
     pieces: 12,
-    render: (cx, cy, key) => (
-      <ellipse key={key} cx={cx} cy={cy} rx={5} ry={7} fill="#FFD700" opacity={0.9} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 3 + seededRand(cx, cy, idx) * 2;
+      return (
+        <g key={key}>
+          <ellipse cx={cx} cy={cy} rx={r} ry={r * 1.3} fill="#FFD700" opacity={0.9} />
+          <ellipse cx={cx} cy={cy} rx={r * 0.5} ry={r * 0.7} fill="#FFC000" opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Ananas": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={12} ry={8} fill="#FFE135" opacity={0.9} />
-        <ellipse cx={cx} cy={cy} rx={7} ry={4} fill="#FFC200" opacity={0.5} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      const r = 10 + seededRand(cx, cy, idx) * 3;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.7} fill="#F5D020" opacity={0.85} />
+          <ellipse cx={cx} cy={cy} rx={r * 0.6} ry={r * 0.4} fill="#E8C000" opacity={0.4} />
+          {/* Textur */}
+          <circle cx={cx - 3} cy={cy - 1} r={1} fill="#C8A000" opacity={0.3} />
+          <circle cx={cx + 2} cy={cy + 1} r={1} fill="#C8A000" opacity={0.3} />
+        </g>
+      );
+    },
   },
   "Gorgonzola": {
     pieces: 5,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={13} ry={9} fill="#F5F5DC" opacity={0.85} />
-        <circle cx={cx - 3} cy={cy - 2} r={3} fill="#4169E1" opacity={0.3} />
-        <circle cx={cx + 4} cy={cy + 2} r={2} fill="#4169E1" opacity={0.3} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rx = 11 + seededRand(cx, cy, idx) * 5;
+      const ry = 7 + seededRand(cx, cy, idx + 2) * 4;
+      const rot = seededRand(cx, cy, idx + 1) * 180;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#F0EDD8" opacity={0.85} />
+          {/* Blauschimmel-Adern */}
+          <circle cx={cx - rx * 0.25} cy={cy - ry * 0.2} r={rx * 0.15} fill="#6080B0" opacity={0.35} />
+          <circle cx={cx + rx * 0.2} cy={cy + ry * 0.15} r={rx * 0.12} fill="#5070A0" opacity={0.3} />
+          <circle cx={cx + rx * 0.35} cy={cy - ry * 0.1} r={rx * 0.08} fill="#5878A8" opacity={0.25} />
+        </g>
+      );
+    },
   },
   "Frischkäse": {
     pieces: 5,
-    render: (cx, cy, key) => (
-      <ellipse key={key} cx={cx} cy={cy} rx={14} ry={10} fill="#FFFFF0" opacity={0.85}
-        style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const rx = 12 + seededRand(cx, cy, idx) * 5;
+      const ry = 8 + seededRand(cx, cy, idx + 2) * 4;
+      const rot = seededRand(cx, cy, idx + 1) * 180;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#FFFFF0" opacity={0.8} />
+          <ellipse cx={cx} cy={cy} rx={rx * 0.5} ry={ry * 0.4} fill="white" opacity={0.3} />
+        </g>
+      );
+    },
   },
   "Speck": {
     pieces: 5,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <rect x={cx - 10} y={cy - 5} width={20} height={10} rx={3} fill="#C0392B"
-          transform={`rotate(${(Math.round(cx)) % 50 - 25} ${cx} ${cy})`} />
-        <rect x={cx - 10} y={cy - 2} width={20} height={4} rx={1} fill="#F5CBA7" opacity={0.5}
-          transform={`rotate(${(Math.round(cx)) % 50 - 25} ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 180 - 90;
+      const w = 18 + seededRand(cx, cy, idx) * 6;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <rect x={cx - w / 2} y={cy - 4} width={w} height={8} rx={2} fill="#A83020" opacity={0.85} />
+          {/* Fettstreifen */}
+          <rect x={cx - w / 2 + 1} y={cy - 1.5} width={w - 2} height={3} rx={1} fill="#F5D0B8" opacity={0.5} />
+          <rect x={cx - w / 2 + 2} y={cy + 2} width={w * 0.4} height={1.5} rx={0.5} fill="#F5D0B8" opacity={0.3} />
+        </g>
+      );
+    },
   },
   "Hackfleisch": {
     pieces: 8,
-    render: (cx, cy, key) => (
-      <circle key={key} cx={cx} cy={cy} r={8} fill="#8B4513" opacity={0.85} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 5 + seededRand(cx, cy, idx) * 4;
+      return (
+        <g key={key}>
+          <circle cx={cx} cy={cy} r={r} fill="#6B3A1F" opacity={0.85} />
+          <circle cx={cx - r * 0.2} cy={cy - r * 0.2} r={r * 0.3} fill="#8B5A3F" opacity={0.4} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#5A2A10" strokeWidth={0.5} opacity={0.3} />
+        </g>
+      );
+    },
   },
   "Artischocken": {
     pieces: 5,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx} cy={cy} r={10} fill="#6B8E23" opacity={0.8} />
-        <circle cx={cx} cy={cy} r={6} fill="#8FBC45" opacity={0.7} />
-        <circle cx={cx} cy={cy} r={3} fill="#FFFACD" opacity={0.8} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      const scale = 0.8 + seededRand(cx, cy, idx) * 0.4;
+      return (
+        <g key={key} transform={`translate(${cx},${cy}) rotate(${rot}) scale(${scale})`}>
+          {/* Artischockenherz von oben */}
+          <ellipse cx={0} cy={0} rx={9} ry={7} fill="#7A9E40" opacity={0.8} />
+          <ellipse cx={0} cy={-2} rx={6} ry={4} fill="#90B850" opacity={0.6} />
+          <ellipse cx={0} cy={1} rx={4} ry={2.5} fill="#A0C860" opacity={0.5} />
+        </g>
+      );
+    },
   },
   "Tomaten frisch": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx} cy={cy} r={11} fill="#FF3333" opacity={0.85} />
-        <circle cx={cx} cy={cy} r={7} fill="#FF6666" opacity={0.5} />
-        <line x1={cx - 4} y1={cy} x2={cx + 4} y2={cy} stroke="#CC0000" strokeWidth={1} opacity={0.4} />
-        <line x1={cx} y1={cy - 4} x2={cx} y2={cy + 4} stroke="#CC0000" strokeWidth={1} opacity={0.4} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 9 + seededRand(cx, cy, idx) * 3;
+      return (
+        <g key={key}>
+          <circle cx={cx} cy={cy} r={r} fill="#E03020" opacity={0.85} />
+          {/* Kammern */}
+          <circle cx={cx} cy={cy} r={r * 0.55} fill="#E84040" opacity={0.4} />
+          <line x1={cx - r * 0.35} y1={cy} x2={cx + r * 0.35} y2={cy} stroke="#C02010" strokeWidth={0.8} opacity={0.3} />
+          <line x1={cx} y1={cy - r * 0.35} x2={cx} y2={cy + r * 0.35} stroke="#C02010" strokeWidth={0.8} opacity={0.3} />
+          {/* Glanz */}
+          <ellipse cx={cx - r * 0.2} cy={cy - r * 0.25} rx={r * 0.2} ry={r * 0.12} fill="white" opacity={0.15} />
+        </g>
+      );
+    },
   },
   "Kirschtomaten": {
     pieces: 7,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx} cy={cy} r={9} fill="#CC2200" opacity={0.9} />
-        <circle cx={cx - 2} cy={cy - 2} r={3} fill="#FF4444" opacity={0.5} />
-        <line x1={cx} y1={cy - 9} x2={cx + 2} y2={cy - 14} stroke="#2D6A2D" strokeWidth={2} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 7 + seededRand(cx, cy, idx) * 2;
+      return (
+        <g key={key}>
+          <circle cx={cx} cy={cy} r={r} fill="#CC2200" opacity={0.9} />
+          <ellipse cx={cx - r * 0.2} cy={cy - r * 0.25} rx={r * 0.25} ry={r * 0.15} fill="white" opacity={0.2} />
+          {/* Stielansatz */}
+          <circle cx={cx} cy={cy - r + 1} r={1.5} fill="#2D6A2D" opacity={0.7} />
+        </g>
+      );
+    },
   },
   "Knoblauch": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={8} ry={6} fill="#FFFDD0" opacity={0.9} />
-        <ellipse cx={cx} cy={cy} rx={4} ry={3} fill="#F5F0C0" opacity={0.6} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      const r = 5 + seededRand(cx, cy, idx) * 3;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={r} ry={r * 0.7} fill="#F5F0D0" opacity={0.85} />
+          <ellipse cx={cx} cy={cy} rx={r * 0.5} ry={r * 0.3} fill="#EBE5C0" opacity={0.5} />
+        </g>
+      );
+    },
   },
   "Ei": {
     pieces: 3,
     render: (cx, cy, key) => (
       <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={20} ry={15} fill="#FFFEF0" opacity={0.85} />
-        <circle cx={cx} cy={cy} r={7} fill="#FFB300" opacity={0.9} />
+        <ellipse cx={cx} cy={cy} rx={16} ry={13} fill="#FFF8E8" opacity={0.9} />
+        <circle cx={cx} cy={cy} r={6} fill="#F0A500" opacity={0.9} />
+        <circle cx={cx} cy={cy} r={3.5} fill="#FFB800" opacity={0.7} />
+        {/* Glanz */}
+        <ellipse cx={cx - 1.5} cy={cy - 1.5} rx={1.5} ry={1} fill="white" opacity={0.3} />
       </g>
     ),
   },
   "Broccoli": {
     pieces: 5,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx - 5} cy={cy - 3} r={7} fill="#228B22" opacity={0.85} />
-        <circle cx={cx + 5} cy={cy - 3} r={7} fill="#2E8B22" opacity={0.85} />
-        <circle cx={cx} cy={cy + 3} r={7} fill="#1E7B1E" opacity={0.85} />
-        <rect x={cx - 2} y={cy + 7} width={4} height={7} rx={2} fill="#8B7355" />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const scale = 0.7 + seededRand(cx, cy, idx) * 0.4;
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      return (
+        <g key={key} transform={`translate(${cx},${cy}) scale(${scale}) rotate(${rot})`}>
+          <circle cx={-4} cy={-3} r={5} fill="#2E8B2E" opacity={0.85} />
+          <circle cx={4} cy={-3} r={5} fill="#348B34" opacity={0.85} />
+          <circle cx={0} cy={2} r={5} fill="#288B28" opacity={0.85} />
+          <circle cx={0} cy={-5} r={4} fill="#3A9B3A" opacity={0.75} />
+          <rect x={-1.5} y={4} width={3} height={5} rx={1.5} fill="#8B7355" opacity={0.7} />
+        </g>
+      );
+    },
   },
   "Kapern": {
     pieces: 12,
-    render: (cx, cy, key) => (
-      <circle key={key} cx={cx} cy={cy} r={4} fill="#5B7A3A" opacity={0.9} />
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 3 + seededRand(cx, cy, idx) * 1.5;
+      return (
+        <g key={key}>
+          <circle cx={cx} cy={cy} r={r} fill="#5B7A3A" opacity={0.9} />
+          <ellipse cx={cx - r * 0.2} cy={cy - r * 0.2} rx={r * 0.3} ry={r * 0.2} fill="#6B8A4A" opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Steinpilze": {
     pieces: 4,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy - 4} rx={13} ry={8} fill="#7B5B3A" opacity={0.9} />
-        <rect x={cx - 3} y={cy} width={6} height={8} rx={2} fill="#8B6B4A" />
-        <ellipse cx={cx} cy={cy - 4} rx={8} ry={4} fill="#9B7B5A" opacity={0.5} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const scale = 0.8 + seededRand(cx, cy, idx) * 0.4;
+      const rot = seededRand(cx, cy, idx + 1) * 360;
+      return (
+        <g key={key} transform={`translate(${cx},${cy}) scale(${scale}) rotate(${rot})`}>
+          <ellipse cx={0} cy={-3} rx={11} ry={6} fill="#7B5B3A" opacity={0.9} />
+          <rect x={-2.5} y={0} width={5} height={7} rx={2} fill="#8B6B4A" />
+          <ellipse cx={0} cy={-3} rx={7} ry={3} fill="#9B7B5A" opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Sucuk": {
     pieces: 6,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <circle cx={cx} cy={cy} r={12} fill="#5C1A1A" />
-        <circle cx={cx} cy={cy} r={8} fill="#7B2A2A" />
-        <circle cx={cx - 3} cy={cy - 3} r={2} fill="#4A0000" />
-        <circle cx={cx + 3} cy={cy + 3} r={1.5} fill="#4A0000" />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const r = 10 + seededRand(cx, cy, idx) * 3;
+      return (
+        <g key={key}>
+          <circle cx={cx} cy={cy} r={r} fill="#5C1A1A" />
+          <circle cx={cx} cy={cy} r={r * 0.75} fill="#7B2A2A" />
+          <circle cx={cx - r * 0.25} cy={cy - r * 0.25} r={r * 0.1} fill="#FFEEDD" opacity={0.4} />
+          <circle cx={cx + r * 0.2} cy={cy + r * 0.15} r={r * 0.08} fill="#FFEEDD" opacity={0.35} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#4A1010" strokeWidth={0.7} opacity={0.4} />
+        </g>
+      );
+    },
   },
   "Parmesan/Grana": {
     pieces: 7,
-    render: (cx, cy, key) => (
-      <g key={key}>
-        <ellipse cx={cx} cy={cy} rx={10} ry={6} fill="#FFFACD" opacity={0.8}
-          transform={`rotate(${(Math.round(cx)) % 40 - 20} ${cx} ${cy})`} />
-      </g>
-    ),
+    render: (cx, cy, key, idx) => {
+      const rot = seededRand(cx, cy, idx + 1) * 180;
+      const rx = 7 + seededRand(cx, cy, idx) * 5;
+      const ry = 4 + seededRand(cx, cy, idx + 2) * 3;
+      return (
+        <g key={key} transform={`rotate(${rot} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#FFF8D0" opacity={0.75} />
+          <ellipse cx={cx} cy={cy} rx={rx * 0.4} ry={ry * 0.3} fill="#FFE8A0" opacity={0.3} />
+        </g>
+      );
+    },
   },
 };
 
 const DEFAULT_VISUAL = {
   pieces: 5,
-  render: (cx: number, cy: number, key: string) => (
-    <circle key={key} cx={cx} cy={cy} r={8} fill="#D2691E" opacity={0.8} />
-  ),
+  render: (cx: number, cy: number, key: string, idx: number) => {
+    const r = 6 + seededRand(cx, cy, idx) * 4;
+    return <circle key={key} cx={cx} cy={cy} r={r} fill="#D2691E" opacity={0.8} />;
+  },
 };
 
 interface HalfHalfData {
@@ -356,19 +543,18 @@ interface Props {
   halfHalf?: HalfHalfData | null;
 }
 
-export default function PizzaVisual({ sauce, selectedExtras, size, halfHalf }: Props) {
+export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfHalf }: Props) {
   const isFamily = size.toLowerCase().includes("famili");
   const imageMap = isFamily ? FAMILY_SAUCE_IMAGES : SAUCE_IMAGES;
   const baseImage = imageMap[sauce] ?? imageMap["Tomatensauce"];
 
-  // Durchmesser aus Label parsen (z.B. "Ø 30 cm" → 30)
   const cmMatch = size.match(/(\d+)\s*cm/i);
   const cm = cmMatch ? parseInt(cmMatch[1]) : 30;
-
-  // Proportionale Breite: 30cm→45%, 35cm→57%, 40cm→69%, 45cm→80%, 50cm→92%, Familie→100%
   const maxPct = isFamily ? 100 : Math.round(45 + ((cm - 30) / 20) * 47);
 
-  // Toppings aufbauen
+  const hasCheese = cheese !== "Ohne Käse";
+  const cheeseImage = CHEESE_IMAGES[sauce] ?? CHEESE_IMAGES["Tomatensauce"];
+
   const buildToppings = (
     extrasArr: { id: string; name: string }[],
     posArr: [number, number][]
@@ -380,7 +566,10 @@ export default function PizzaVisual({ sauce, selectedExtras, size, halfHalf }: P
       for (let i = 0; i < count; i++) {
         const posIndex = (extraIndex * 3 + i * Math.floor(posArr.length / count)) % posArr.length;
         const [cx, cy] = posArr[posIndex];
-        elements.push(visual.render(cx, cy, `${extra.id}-${i}`));
+        // Leichte zufällige Verschiebung für natürlicheren Look
+        const offsetX = (seededRand(cx, cy, i + extraIndex * 7) - 0.5) * 8;
+        const offsetY = (seededRand(cy, cx, i + extraIndex * 7) - 0.5) * 8;
+        elements.push(visual.render(cx + offsetX, cy + offsetY, `${extra.id}-${i}`, i));
       }
     });
     return elements;
@@ -403,18 +592,14 @@ export default function PizzaVisual({ sauce, selectedExtras, size, halfHalf }: P
 
   return (
     <div className="relative flex items-center justify-center">
-      {/* Größen-Label */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-7 bg-dark text-white text-xs font-bold px-3 py-1 rounded-full z-10">
         {size}
       </div>
 
-      {/* Pizza-Container */}
       <div
         className={`relative transition-all duration-500 ${isFamily ? "aspect-video" : "aspect-square"}`}
         style={{ width: `${maxPct}%`, filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.30))" }}
       >
-
-        {/* Echtes Pizza-Basisbild */}
         <Image
           src={baseImage}
           alt={`Pizza mit ${sauce}`}
@@ -427,12 +612,15 @@ export default function PizzaVisual({ sauce, selectedExtras, size, halfHalf }: P
         {/* SVG Toppings-Overlay */}
         <svg
           viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full z-[1]"
           style={{ pointerEvents: "none" }}
         >
           <defs>
             {isFamily ? (
               <>
+                <clipPath id="pizzaClip">
+                  <rect x="30" y="30" width="540" height="340" rx="20" />
+                </clipPath>
                 <clipPath id="leftHalfClip">
                   <rect x="0" y="0" width="300" height="400" />
                 </clipPath>
@@ -442,6 +630,9 @@ export default function PizzaVisual({ sauce, selectedExtras, size, halfHalf }: P
               </>
             ) : (
               <>
+                <clipPath id="pizzaClip">
+                  <circle cx="200" cy="200" r="135" />
+                </clipPath>
                 <clipPath id="leftHalfClip">
                   <rect x="0" y="0" width="200" height="400" />
                 </clipPath>
@@ -452,11 +643,20 @@ export default function PizzaVisual({ sauce, selectedExtras, size, halfHalf }: P
             )}
           </defs>
 
-          {halfHalf ? (
+          <g clipPath="url(#pizzaClip)">
+            {halfHalf ? (
+              <>
+                <g clipPath="url(#leftHalfClip)">{leftToppingElements}</g>
+                <g clipPath="url(#rightHalfClip)">{rightToppingElements}</g>
+              </>
+            ) : (
+              <g>{toppingElements}</g>
+            )}
+          </g>
+
+          {/* Halb-Halb Trennlinie */}
+          {halfHalf && (
             <>
-              <g clipPath="url(#leftHalfClip)">{leftToppingElements}</g>
-              <g clipPath="url(#rightHalfClip)">{rightToppingElements}</g>
-              {/* Halb-Halb Trennlinie – Mitte je nach Form */}
               {isFamily ? (
                 <>
                   <line x1="300" y1="20" x2="300" y2="380" stroke="white" strokeWidth="3"
@@ -479,13 +679,22 @@ export default function PizzaVisual({ sauce, selectedExtras, size, halfHalf }: P
                 </>
               )}
             </>
-          ) : (
-            <g>{toppingElements}</g>
           )}
         </svg>
+
+        {/* Echtes Käse-Bild als Overlay ÜBER den Toppings */}
+        {hasCheese && (
+          <Image
+            src={cheeseImage}
+            alt={`Käse-Overlay`}
+            fill
+            className="object-contain z-[2] transition-all duration-500"
+            style={{ opacity: 0.6, mixBlendMode: "normal" }}
+            sizes="(max-width: 768px) 100vw, 384px"
+          />
+        )}
       </div>
 
-      {/* Leere Pizza Hinweis – unterhalb des Bildes */}
       {isEmpty && (
         <p className="mt-3 text-dark/40 text-xs font-medium text-center">
           {halfHalf ? "Wähle Beläge für jede Hälfte!" : "Wähle Beläge und sieh sie hier erscheinen!"}
