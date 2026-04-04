@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls:*)",
+      "Bash(npx vercel@latest deploy --prod)",
+      "Bash(openssl rand:*)",
+      "Bash(npx vercel@latest env add ADMIN_SESSION_TOKEN production)",
+      "Bash(npx vercel@latest env add ADMIN_SESSION_TOKEN production main --value \"ebd6322eb1a5b9ab2b0d58355c56eafaed7fa47a0f3f5f076a721770be6b7708\" --yes)",
+      "Bash(npx vercel@latest env add ADMIN_SESSION_TOKEN production --value \"ebd6322eb1a5b9ab2b0d58355c56eafaed7fa47a0f3f5f076a721770be6b7708\" --yes)",
+      "Bash(npx vercel@latest logs diavolos-pizza)",
+      "Bash(xargs cat:*)",
+      "Bash(npx next:*)",
+      "Bash(npx vercel@latest inspect diavolos-pizza-d7iqxrpqk-pjs-projects-7271df0e.vercel.app --logs)"
+    ]
+  }
+}
