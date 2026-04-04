@@ -696,14 +696,15 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Echtes Käse-Bild als Overlay ÜBER den Toppings */}
         {hasCheese && (
-          <Image
-            src={cheeseImage}
-            alt={`Käse-Overlay`}
-            fill
-            className="object-contain z-[2] transition-all duration-500"
-            style={{ opacity: 0.75, mixBlendMode: "normal" }}
-            sizes="(max-width: 768px) 100vw, 384px"
-          />
+          <div className="absolute inset-0 z-[2]" style={{ opacity: 0.75 }}>
+            <Image
+              src={cheeseImage}
+              alt={`Käse-Overlay`}
+              fill
+              className="object-contain transition-all duration-500"
+              sizes="(max-width: 768px) 100vw, 384px"
+            />
+          </div>
         )}
       </div>
 
