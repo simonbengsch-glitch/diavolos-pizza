@@ -31,40 +31,52 @@ function seededRand(x: number, y: number, seed: number): number {
   return n - Math.floor(n);
 }
 
-// Positionen enger am Zentrum (200,200), Radius ~100px – alles innerhalb der Pizza, nicht auf der Kruste
+// Pizza-Zentrum im Bild liegt bei ca. (200, 215) – leicht unterhalb der geometrischen Mitte
+// Innerer Sauce-Bereich hat Radius ~85px (Kruste ist dick)
+const CX = 200;
+const CY = 215;
+const R = 80; // max Abstand vom Zentrum
+
 const POSITIONS: [number, number][] = [
-  [200, 135], [248, 155], [270, 200], [248, 245],
-  [200, 268], [152, 245], [130, 200], [152, 155],
-  [200, 168], [232, 178], [240, 218], [218, 248],
-  [182, 248], [160, 218], [168, 178], [200, 200],
-  [216, 158], [244, 228], [156, 228], [184, 158],
+  // Äußerer Ring (8 Positionen, Radius ~75)
+  [CX, CY - 75],       [CX + 53, CY - 53],  [CX + 75, CY],       [CX + 53, CY + 53],
+  [CX, CY + 75],       [CX - 53, CY + 53],  [CX - 75, CY],       [CX - 53, CY - 53],
+  // Mittlerer Ring (6 Positionen, Radius ~45)
+  [CX, CY - 45],       [CX + 39, CY - 22],  [CX + 39, CY + 22],
+  [CX, CY + 45],       [CX - 39, CY + 22],  [CX - 39, CY - 22],
+  // Innerer Ring (4 Positionen, Radius ~22)
+  [CX + 22, CY - 12],  [CX + 22, CY + 12],  [CX - 22, CY + 12],  [CX - 22, CY - 12],
+  // Zentrum
+  [CX, CY],
 ];
 
-// Halb-Halb Positionen (enger)
+// Halb-Halb Positionen
 const LEFT_POSITIONS: [number, number][] = [
-  [168, 135], [148, 168], [132, 200], [148, 232], [168, 265],
-  [155, 185], [162, 218], [140, 200], [175, 155], [160, 248],
+  [CX - 20, CY - 70], [CX - 55, CY - 40], [CX - 70, CY],      [CX - 55, CY + 40], [CX - 20, CY + 70],
+  [CX - 35, CY - 20], [CX - 40, CY + 20], [CX - 60, CY - 10], [CX - 25, CY],      [CX - 15, CY + 40],
 ];
 const RIGHT_POSITIONS: [number, number][] = [
-  [232, 135], [252, 168], [268, 200], [252, 232], [232, 265],
-  [245, 185], [238, 218], [260, 200], [225, 155], [240, 248],
+  [CX + 20, CY - 70], [CX + 55, CY - 40], [CX + 70, CY],      [CX + 55, CY + 40], [CX + 20, CY + 70],
+  [CX + 35, CY - 20], [CX + 40, CY + 20], [CX + 60, CY - 10], [CX + 25, CY],      [CX + 15, CY + 40],
 ];
 
-// Familienpizza Positionen (enger zentriert in 600x400)
+// Familienpizza Positionen (Zentrum 300,210 in 600x400)
+const FCX = 300;
+const FCY = 210;
 const FAMILY_POSITIONS: [number, number][] = [
-  [150, 120], [230, 110], [300, 120], [370, 110], [450, 120],
-  [120, 200], [210, 190], [300, 200], [390, 190], [480, 200],
-  [150, 280], [230, 290], [300, 280], [370, 290], [450, 280],
-  [180, 160], [300, 250], [420, 160], [180, 240], [420, 240],
+  [FCX - 150, FCY - 70], [FCX - 80, FCY - 80], [FCX, FCY - 70],      [FCX + 80, FCY - 80], [FCX + 150, FCY - 70],
+  [FCX - 160, FCY],      [FCX - 80, FCY - 20], [FCX, FCY],           [FCX + 80, FCY - 20], [FCX + 160, FCY],
+  [FCX - 150, FCY + 70], [FCX - 80, FCY + 70], [FCX, FCY + 70],     [FCX + 80, FCY + 70], [FCX + 150, FCY + 70],
+  [FCX - 40, FCY - 45],  [FCX + 40, FCY + 45], [FCX + 120, FCY - 40],[FCX - 120, FCY + 40],[FCX + 40, FCY - 45],
 ];
 
 const FAMILY_LEFT_POSITIONS: [number, number][] = [
-  [120, 120], [165, 155], [200, 200], [165, 245], [120, 280],
-  [140, 175], [185, 225], [110, 200], [195, 145], [150, 200],
+  [FCX - 180, FCY - 60], [FCX - 140, FCY - 30], [FCX - 100, FCY],     [FCX - 140, FCY + 30], [FCX - 180, FCY + 60],
+  [FCX - 160, FCY - 10], [FCX - 120, FCY + 50],  [FCX - 200, FCY],     [FCX - 100, FCY - 50], [FCX - 150, FCY],
 ];
 const FAMILY_RIGHT_POSITIONS: [number, number][] = [
-  [480, 120], [435, 155], [400, 200], [435, 245], [480, 280],
-  [460, 175], [415, 225], [490, 200], [405, 145], [450, 200],
+  [FCX + 180, FCY - 60], [FCX + 140, FCY - 30], [FCX + 100, FCY],     [FCX + 140, FCY + 30], [FCX + 180, FCY + 60],
+  [FCX + 160, FCY - 10], [FCX + 120, FCY + 50],  [FCX + 200, FCY],     [FCX + 100, FCY - 50], [FCX + 150, FCY],
 ];
 
 
@@ -631,7 +643,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
             ) : (
               <>
                 <clipPath id="pizzaClip">
-                  <circle cx="200" cy="200" r="135" />
+                  <circle cx="200" cy="215" r="105" />
                 </clipPath>
                 <clipPath id="leftHalfClip">
                   <rect x="0" y="0" width="200" height="400" />
@@ -689,7 +701,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
             alt={`Käse-Overlay`}
             fill
             className="object-contain z-[2] transition-all duration-500"
-            style={{ opacity: 0.6, mixBlendMode: "normal" }}
+            style={{ opacity: 0.75, mixBlendMode: "normal" }}
             sizes="(max-width: 768px) 100vw, 384px"
           />
         )}
