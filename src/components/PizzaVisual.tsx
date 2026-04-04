@@ -557,15 +557,17 @@ interface Props {
 
 export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfHalf }: Props) {
   const isFamily = size.toLowerCase().includes("famili");
-  const imageMap = isFamily ? FAMILY_SAUCE_IMAGES : SAUCE_IMAGES;
-  const baseImage = imageMap[sauce] ?? imageMap["Tomatensauce"];
+  const hasCheese = cheese !== "Ohne Käse";
+
+  // Wenn Käse gewählt → Käse-Bild als Basis, sonst Sauce-only Bild
+  const sauceMap = isFamily ? FAMILY_SAUCE_IMAGES : SAUCE_IMAGES;
+  const baseImage = hasCheese
+    ? (CHEESE_IMAGES[sauce] ?? CHEESE_IMAGES["Tomatensauce"])
+    : (sauceMap[sauce] ?? sauceMap["Tomatensauce"]);
 
   const cmMatch = size.match(/(\d+)\s*cm/i);
   const cm = cmMatch ? parseInt(cmMatch[1]) : 30;
   const maxPct = isFamily ? 100 : Math.round(45 + ((cm - 30) / 20) * 47);
-
-  const hasCheese = cheese !== "Ohne Käse";
-  const cheeseImage = CHEESE_IMAGES[sauce] ?? CHEESE_IMAGES["Tomatensauce"];
 
   const buildToppings = (
     extrasArr: { id: string; name: string }[],
@@ -609,14 +611,14 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
       </div>
 
       <div
-        className={`relative transition-all duration-500 ${isFamily ? "aspect-video" : "aspect-square"}`}
+        className={`relative transition-all duration-500 ${isFamily ? "aspect-video" : "aspect-square"} ${isFamily ? "rounded-2xl" : "rounded-full"} overflow-hidden`}
         style={{ width: `${maxPct}%`, filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.30))" }}
       >
         <Image
           src={baseImage}
           alt={`Pizza mit ${sauce}`}
           fill
-          className="object-contain transition-all duration-500"
+          className="object-cover transition-all duration-500"
           sizes="(max-width: 768px) 100vw, 384px"
           priority
         />
@@ -694,18 +696,6 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           )}
         </svg>
 
-        {/* Echtes Käse-Bild als Overlay ÜBER den Toppings */}
-        {hasCheese && (
-          <div className="absolute inset-0 z-[2] pointer-events-none" style={{ opacity: 0.75 }}>
-            <Image
-              src={cheeseImage}
-              alt={`Käse-Overlay`}
-              fill
-              className="object-contain transition-all duration-500"
-              sizes="(max-width: 768px) 100vw, 384px"
-            />
-          </div>
-        )}
       </div>
 
       {isEmpty && (
