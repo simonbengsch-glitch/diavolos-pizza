@@ -1,106 +1,86 @@
 /**
  * Prompt-Builder fuer Pizza-Belag-Layer.
- * Erzeugt praezise DALL-E Prompts mit zutatspezifischen visuellen Regeln.
+ * Erzeugt Prompts die isolierte Zutaten auf REINWEISSEM Hintergrund generieren.
+ * Der weiße Hintergrund wird danach per sharp zu Transparenz konvertiert.
  */
 
-// ─── Basis-Regeln (gelten fuer ALLE Zutaten) ─────────────────────
-
 const ABSOLUTE_RULES = [
-  "CRITICAL RULES — MUST FOLLOW:",
-  "- ONLY the topping itself is visible, nothing else",
-  "- Completely transparent background (PNG alpha channel)",
-  "- ABSOLUTELY NO: dough, sauce, cheese base, plate, table, surface, shadows on ground",
-  "- ABSOLUTELY NO: decorations, herbs as garnish, extra ingredients, oil drizzle",
-  "- ABSOLUTELY NO: mixed toppings — show ONLY the single specified ingredient",
-  "- The toppings float on pure transparent nothingness",
-  "- No circular pizza shape outline — just scattered pieces in a roughly circular area"
+  "CRITICAL RULES — VIOLATING ANY OF THESE RUINS THE IMAGE:",
+  "- PURE WHITE BACKGROUND (#FFFFFF) — nothing else behind the food",
+  "- ONLY show the single specified topping ingredient, absolutely nothing else",
+  "- NO pizza dough, NO sauce, NO cheese, NO plate, NO table, NO surface",
+  "- NO shadows on the background — only very subtle shadows between food pieces",
+  "- NO decorations, NO herbs as garnish, NO oil drizzle, NO extra ingredients",
+  "- NO mixed toppings — show ONLY the one ingredient specified",
+  "- The food pieces float on a perfectly clean pure white void",
+  "- NO circular outline or pizza shape — just the food pieces arranged in a circle"
 ].join("\n");
 
 const CAMERA_RULES = [
   "CAMERA AND LIGHTING:",
-  "- Perfectly top-down overhead view (90 degrees, birds-eye)",
-  "- Soft, even studio lighting from above",
-  "- No harsh shadows — only very subtle contact shadows between pieces",
-  "- Sharp focus on every piece",
-  "- Photorealistic food photography quality"
+  "- Perfectly top-down overhead view (exactly 90 degrees, birds-eye)",
+  "- Bright, even, shadowless studio lighting",
+  "- Pure white background with zero texture or gradient",
+  "- Sharp focus, high detail on every piece",
+  "- Commercial food photography quality, 8K resolution"
 ].join("\n");
-
-// ─── Layer-spezifische Regeln ─────────────────────────────────────
 
 const LAYER_RULES = {
   under_cheese: [
-    "LAYER CONTEXT:",
-    "This topping will be placed UNDER a separate cheese overlay in the final composite.",
-    "It should look like it was placed on pizza dough/sauce BEFORE cheese was added.",
-    "The topping should look like it has been baked in an oven.",
-    "Show appropriate heat effects: slight shrinkage, color changes, oil release.",
-    "The pieces should be distributed as a pizzaiolo would place them."
+    "COOKING STATE:",
+    "This ingredient has been baked in a pizza oven.",
+    "Show realistic heat effects: slight browning, oil release, edges curling.",
+    "The pieces look like they came out of a 400°C wood-fired oven.",
+    "Realistic cooked appearance, not raw."
   ].join("\n"),
 
   over_cheese: [
-    "LAYER CONTEXT:",
-    "This topping will be placed ON TOP of cheese in the final composite.",
-    "It should look like it was added AFTER baking — fresh and uncooked appearance.",
-    "No baking effects on this topping — it should look freshly placed.",
-    "Colors should be vivid and fresh, not heat-affected.",
-    "The pieces should look like they were just placed by the chef moments ago."
+    "COOKING STATE:",
+    "This ingredient is placed on the pizza AFTER baking — it is fresh and uncooked.",
+    "Vivid, fresh colors. No heat effects. No browning.",
+    "Looks like it was just placed by the chef moments ago."
   ].join("\n")
 };
 
-// ─── Placement-Stil Beschreibungen ────────────────────────────────
-
 const PLACEMENT_DESCRIPTIONS = {
-  scattered_circular: "Distribute pieces in a roughly circular area (like a 30cm pizza), slightly denser toward center, naturally irregular spacing. Not a perfect circle — organic distribution.",
-  torn_scattered: "Scatter torn/broken pieces randomly across the circular area. No two pieces the same shape. Casual, hand-placed look.",
-  draped_loose: "Loosely drape large thin pieces across the area. They should have natural folds and wrinkles, not laid flat. Elegant and casual at the same time.",
-  scattered_random: "Scatter small pieces randomly with natural clustering. Some areas slightly denser, some sparser. Not a grid pattern.",
-  crumbled_even: "Scatter many small crumbles relatively evenly but with natural variation. Denser in center, slightly sparser at edges.",
-  small_mounds: "Place in small separated mounds or clusters, each mound a few centimeters across. Space between mounds.",
-  sparse_radial: "Place few pieces arranged loosely radiating from center. Very sparse — lots of empty space between pieces.",
-  placed_elegant: "Place pieces deliberately with artistic intent. Each piece visible and distinct. Premium presentation.",
-  scattered_even: "Scatter pieces evenly across the circular area with consistent spacing. Natural but well-distributed.",
-  scattered_sparse: "Scatter pieces with generous empty space between them. Less is more. Each piece should breathe.",
-  scattered_colorful: "Scatter pieces to maximize color variety across the area. Mix colors evenly.",
-  rings_scattered: "Scatter ring shapes and half-rings naturally across the area, some overlapping, some isolated.",
-  sparse_scattered: "Very few pieces scattered with large gaps between them. Accent topping, not main coverage.",
-  wilted_clusters: "Form small wilted clusters rather than even spread. Natural clustering from cooking. Some areas bare.",
-  fresh_piled: "Pile loosely and airily on top. Should have height and volume, not flat. Fresh and alive looking.",
-  scattered_casual: "Scatter casually as if tossed by hand. Natural and unforced. Some clustering, some singles.",
-  placed_casual: "Place casually but with intent. Each piece visible. Relaxed but appetizing arrangement.",
-  placed_central: "Place centrally or slightly off-center. Not scattered — deliberately placed. Focal point.",
-  crumbled_scattered: "Scatter crumbled pieces loosely. Mix of sizes. Some more intact, some broken down.",
-  dolloped: "Place small dollops with space between each. Each dollop has a natural rounded shape.",
-  shaved_scattered: "Scatter thin shavings and curled flakes loosely across the surface. Light and airy."
+  scattered_circular: "Arrange pieces in a roughly circular pattern (~25cm diameter) as if placed on an invisible round pizza. Slightly denser toward center. Natural, irregular spacing.",
+  scattered_random: "Scatter pieces randomly across a circular area. No two pieces identical. Casual, hand-placed appearance.",
+  draped_loose: "Drape large thin pieces loosely across the circular area with natural folds and wrinkles. Elegant and casual.",
+  crumbled_even: "Scatter many small crumbles relatively evenly across a circular area. Natural variation in density.",
+  small_mounds: "Place in small separated mounds within a circular area. Space between each mound.",
+  sparse_radial: "Place very few pieces loosely radiating from center. Very sparse — lots of white space.",
+  placed_elegant: "Place pieces deliberately with artistic spacing. Each piece distinct and visible.",
+  scattered_even: "Scatter evenly across a circular area. Consistent but natural spacing.",
+  scattered_sparse: "Scatter with generous white space between pieces. Less is more.",
+  scattered_colorful: "Scatter to show color variety. Mix colors across the area.",
+  rings_scattered: "Scatter ring shapes naturally, some overlapping, some isolated.",
+  sparse_scattered: "Very few pieces with large gaps. Accent topping.",
+  wilted_clusters: "Form small wilted clusters rather than even spread.",
+  fresh_piled: "Pile loosely with height and volume. Fresh and alive looking.",
+  scattered_casual: "Scatter as if tossed by hand. Natural and unforced.",
+  placed_casual: "Place casually but visibly. Each piece clear.",
+  placed_central: "Place in center area. Deliberate focal placement.",
+  crumbled_scattered: "Scatter crumbled pieces loosely. Mix of sizes.",
+  dolloped: "Place small dollops with space between each.",
+  shaved_scattered: "Scatter thin shavings and curled flakes loosely."
 };
 
-// ─── Prompt-Builder ───────────────────────────────────────────────
-
 /**
- * Baut den vollstaendigen Prompt fuer eine Zutat mit allen visuellen Regeln.
- * @param {Object} ingredient - Objekt aus ingredients.json
- * @returns {string} Fertiger Prompt fuer DALL-E
+ * Baut den Prompt fuer eine Zutat.
  */
 function buildPrompt(ingredient) {
   const layerRule = LAYER_RULES[ingredient.render_layer] || LAYER_RULES.under_cheese;
   const placementDesc = PLACEMENT_DESCRIPTIONS[ingredient.placement_style] || PLACEMENT_DESCRIPTIONS.scattered_even;
 
   const parts = [
-    `Professional food photography: Top-down view of ${ingredient.name} pizza topping.`,
+    `Professional commercial food photography on a PURE WHITE background:`,
+    `${ingredient.name} pizza topping, isolated, top-down view.`,
     "",
-    "═══ SUBJECT ═══",
-    `Ingredient: ${ingredient.name}`,
-    `Show: ${ingredient.piece_count} pieces`,
-    `Cut style: ${ingredient.cut_style}`,
-    `Coverage: ${ingredient.coverage} of a ~30cm circular area`,
-    `Density: ${ingredient.density}`,
+    `SUBJECT: ${ingredient.piece_count} pieces of ${ingredient.name}`,
+    `Cut: ${ingredient.cut_style}`,
+    `Appearance: ${ingredient.realism_notes}`,
     "",
-    "═══ APPEARANCE ═══",
-    `Bake state: ${ingredient.bake_state}`,
-    `Moisture: ${ingredient.moisture_level}`,
-    `Visual details: ${ingredient.realism_notes}`,
-    "",
-    "═══ ARRANGEMENT ═══",
-    placementDesc,
+    `ARRANGEMENT: ${placementDesc}`,
     "",
     layerRule,
     "",
@@ -108,24 +88,17 @@ function buildPrompt(ingredient) {
     "",
     CAMERA_RULES,
     "",
-    "OUTPUT: Photorealistic 8K food photography, transparent PNG background, isolated topping only."
+    "The background MUST be perfectly pure white (#FFFFFF). This is non-negotiable."
   ];
 
   return parts.join("\n");
 }
 
-/**
- * Baut einen vereinfachten Debug-Text fuer Logging.
- * @param {Object} ingredient
- * @returns {string}
- */
 function buildDebugSummary(ingredient) {
   return [
     `[${ingredient.id}] ${ingredient.name}`,
     `  Layer: ${ingredient.render_layer} | Category: ${ingredient.category}`,
-    `  Cut: ${ingredient.cut_style}`,
-    `  Density: ${ingredient.density} | Coverage: ${ingredient.coverage}`,
-    `  Bake: ${ingredient.bake_state}`
+    `  Pieces: ${ingredient.piece_count} | Density: ${ingredient.density}`
   ].join("\n");
 }
 

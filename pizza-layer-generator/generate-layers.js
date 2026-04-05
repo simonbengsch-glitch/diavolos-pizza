@@ -3,9 +3,9 @@
 /**
  * generate-layers.js
  *
- * Liest ingredients.json, erzeugt fuer jede Zutat einen transparenten
- * Belag-Layer via OpenAI DALL-E und speichert die Ergebnisse.
- * Optional: remove.bg Cleanup.
+ * Generiert transparente Pizza-Belag-Layer:
+ * 1. DALL-E erzeugt Zutaten auf weißem Hintergrund
+ * 2. sharp entfernt den weißen Hintergrund → transparentes PNG
  */
 
 require("dotenv").config();
@@ -26,27 +26,35 @@ const IMAGE_QUALITY = process.env.IMAGE_QUALITY || "hd";
 const DIR_RAW = path.join(__dirname, "generated", "raw");
 const DIR_CLEAN = path.join(__dirname, "generated", "clean");
 const DIR_DEBUG = path.join(__dirname, "generated", "debug");
-
 const INGREDIENTS_FILE = path.join(__dirname, "ingredients.json");
 
-// Rate-Limit: Pause zwischen API-Aufrufen (ms)
 const DELAY_BETWEEN_CALLS = 12000;
+
+// Schwellenwert für "weiß" — Pixel mit R,G,B alle über diesem Wert werden transparent
+const WHITE_THRESHOLD = 235;
 
 // ─── Validierung ─────────────────────────────────────────────────
 
 if (!OPENAI_API_KEY || OPENAI_API_KEY === "sk-...") {
-  console.error("\n✗ OPENAI_API_KEY fehlt oder ist ein Platzhalter.");
-  console.error("  Kopiere .env.example nach .env und trage deinen Key ein.\n");
+  console.error("\n✗ OPENAI_API_KEY fehlt.");
   process.exit(1);
+}
+
+let sharp;
+try {
+  sharp = require("sharp");
+  console.log("✓ sharp geladen — Post-Processing aktiv\n");
+} catch {
+  console.warn("⚠ sharp nicht installiert — kein Background-Removal möglich");
+  console.warn("  Installiere mit: npm install sharp\n");
+  sharp = null;
 }
 
 // ─── Hilfsfunktionen ─────────────────────────────────────────────
 
 function ensureDirs() {
   [DIR_RAW, DIR_CLEAN, DIR_DEBUG].forEach((dir) => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+    fs.mkdirSync(dir, { recursive: true });
   });
 }
 
@@ -55,39 +63,27 @@ function sleep(ms) {
 }
 
 function loadIngredients() {
-  const raw = fs.readFileSync(INGREDIENTS_FILE, "utf-8");
-  const data = JSON.parse(raw);
-  return data.ingredients;
+  return JSON.parse(fs.readFileSync(INGREDIENTS_FILE, "utf-8")).ingredients;
 }
 
-/**
- * Laedt ein Bild von einer URL und speichert es als Datei.
- */
 function downloadImage(url, filepath) {
   return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(filepath);
-    https.get(url, (response) => {
-      if (response.statusCode === 301 || response.statusCode === 302) {
-        // Redirect folgen
-        https.get(response.headers.location, (redirected) => {
-          redirected.pipe(file);
-          file.on("finish", () => { file.close(); resolve(); });
-        }).on("error", reject);
-        return;
-      }
-      response.pipe(file);
-      file.on("finish", () => { file.close(); resolve(); });
-    }).on("error", (err) => {
-      fs.unlink(filepath, () => {});
-      reject(err);
-    });
+    const get = (u) => {
+      https.get(u, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          get(res.headers.location);
+          return;
+        }
+        const file = fs.createWriteStream(filepath);
+        res.pipe(file);
+        file.on("finish", () => { file.close(); resolve(); });
+      }).on("error", reject);
+    };
+    get(url);
   });
 }
 
-/**
- * Ruft die OpenAI Images API auf.
- */
-async function generateImage(prompt) {
+function generateImage(prompt) {
   const body = JSON.stringify({
     model: IMAGE_MODEL,
     prompt: prompt,
@@ -98,7 +94,7 @@ async function generateImage(prompt) {
   });
 
   return new Promise((resolve, reject) => {
-    const options = {
+    const req = https.request({
       hostname: "api.openai.com",
       path: "/v1/images/generations",
       method: "POST",
@@ -107,29 +103,20 @@ async function generateImage(prompt) {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Length": Buffer.byteLength(body)
       }
-    };
-
-    const req = https.request(options, (res) => {
+    }, (res) => {
       let data = "";
-      res.on("data", (chunk) => { data += chunk; });
+      res.on("data", (c) => { data += c; });
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          if (parsed.error) {
-            reject(new Error(parsed.error.message));
-            return;
-          }
-          if (parsed.data && parsed.data[0]) {
-            resolve(parsed.data[0].url);
-          } else {
-            reject(new Error("Keine Bild-URL in der Antwort"));
-          }
+          if (parsed.error) return reject(new Error(parsed.error.message));
+          if (parsed.data?.[0]?.url) return resolve(parsed.data[0].url);
+          reject(new Error("Keine Bild-URL in Antwort"));
         } catch (e) {
-          reject(new Error(`JSON-Parse-Fehler: ${e.message}`));
+          reject(new Error(`JSON-Parse: ${e.message}`));
         }
       });
     });
-
     req.on("error", reject);
     req.write(body);
     req.end();
@@ -137,89 +124,76 @@ async function generateImage(prompt) {
 }
 
 /**
- * Sendet ein Bild an remove.bg zum Cleanup (optional).
+ * Entfernt weißen Hintergrund mit sharp.
+ * Alle Pixel die "nah an weiß" sind werden transparent.
  */
-async function cleanWithRemoveBg(inputPath, outputPath) {
-  if (!REMOVEBG_API_KEY) return false;
+async function removeWhiteBackground(inputPath, outputPath) {
+  if (!sharp) {
+    fs.copyFileSync(inputPath, outputPath);
+    return false;
+  }
 
-  const imageData = fs.readFileSync(inputPath);
-  const boundary = "----FormBoundary" + Date.now();
+  try {
+    const image = sharp(inputPath);
+    const metadata = await image.metadata();
+    const { width, height } = metadata;
 
-  const bodyParts = [
-    `--${boundary}\r\n`,
-    'Content-Disposition: form-data; name="image_file"; filename="image.png"\r\n',
-    "Content-Type: image/png\r\n\r\n",
-    imageData,
-    `\r\n--${boundary}\r\n`,
-    'Content-Disposition: form-data; name="size"\r\n\r\nfull',
-    `\r\n--${boundary}--\r\n`
-  ];
+    // Raw RGBA-Daten holen
+    const { data, info } = await image
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
 
-  const bodyBuffer = Buffer.concat(bodyParts.map((p) =>
-    typeof p === "string" ? Buffer.from(p) : p
-  ));
+    const pixels = Buffer.from(data);
+    const channels = info.channels; // 4 (RGBA)
 
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: "api.remove.bg",
-      path: "/v1.0/removebg",
-      method: "POST",
-      headers: {
-        "X-Api-Key": REMOVEBG_API_KEY,
-        "Content-Type": `multipart/form-data; boundary=${boundary}`,
-        "Content-Length": bodyBuffer.length
+    let transparentCount = 0;
+    const totalPixels = width * height;
+
+    for (let i = 0; i < pixels.length; i += channels) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+
+      // Wenn alle Kanäle über dem Threshold → transparent machen
+      if (r > WHITE_THRESHOLD && g > WHITE_THRESHOLD && b > WHITE_THRESHOLD) {
+        pixels[i + 3] = 0; // Alpha auf 0
+        transparentCount++;
       }
-    };
+      // Übergangsbereich: Pixel nahe weiß → teilweise transparent
+      else if (r > WHITE_THRESHOLD - 20 && g > WHITE_THRESHOLD - 20 && b > WHITE_THRESHOLD - 20) {
+        const avg = (r + g + b) / 3;
+        const alpha = Math.round(255 * (1 - (avg - (WHITE_THRESHOLD - 20)) / 20));
+        pixels[i + 3] = Math.max(0, Math.min(255, alpha));
+        if (alpha < 128) transparentCount++;
+      }
+    }
 
-    const req = https.request(options, (res) => {
-      const chunks = [];
-      res.on("data", (chunk) => chunks.push(chunk));
-      res.on("end", () => {
-        if (res.statusCode === 200) {
-          fs.writeFileSync(outputPath, Buffer.concat(chunks));
-          resolve(true);
-        } else {
-          const errBody = Buffer.concat(chunks).toString();
-          console.warn(`  ⚠ remove.bg Fehler (${res.statusCode}): ${errBody.slice(0, 120)}`);
-          resolve(false);
-        }
-      });
-    });
+    await sharp(pixels, { raw: { width, height, channels } })
+      .png()
+      .toFile(outputPath);
 
-    req.on("error", (err) => {
-      console.warn(`  ⚠ remove.bg Netzwerkfehler: ${err.message}`);
-      resolve(false);
-    });
-
-    req.write(bodyBuffer);
-    req.end();
-  });
+    const pct = ((transparentCount / totalPixels) * 100).toFixed(1);
+    console.log(`     🧹 Background entfernt: ${pct}% transparent`);
+    return true;
+  } catch (err) {
+    console.warn(`     ⚠ sharp Fehler: ${err.message}`);
+    fs.copyFileSync(inputPath, outputPath);
+    return false;
+  }
 }
 
-/**
- * Speichert Debug-Informationen (Prompt + Metadaten).
- */
 function saveDebugInfo(ingredient, prompt, imageUrl, duration) {
   const debugFile = path.join(DIR_DEBUG, `${ingredient.id}.json`);
-  const info = {
+  fs.writeFileSync(debugFile, JSON.stringify({
     id: ingredient.id,
     name: ingredient.name,
-    category: ingredient.category,
     render_layer: ingredient.render_layer,
-    placement_style: ingredient.placement_style,
-    density: ingredient.density,
-    coverage: ingredient.coverage,
-    bake_state: ingredient.bake_state,
-    prompt: prompt,
-    model: IMAGE_MODEL,
-    size: IMAGE_SIZE,
-    quality: IMAGE_QUALITY,
-    imageUrl: imageUrl,
+    prompt, imageUrl,
+    model: IMAGE_MODEL, size: IMAGE_SIZE, quality: IMAGE_QUALITY,
     generatedAt: new Date().toISOString(),
-    durationMs: duration,
-    removeBgUsed: !!REMOVEBG_API_KEY
-  };
-  fs.writeFileSync(debugFile, JSON.stringify(info, null, 2));
+    durationMs: duration
+  }, null, 2));
 }
 
 // ─── Hauptlogik ──────────────────────────────────────────────────
@@ -229,14 +203,13 @@ async function processIngredient(ingredient, index, total) {
   const rawPath = path.join(DIR_RAW, `${ingredient.id}.png`);
   const cleanPath = path.join(DIR_CLEAN, `${ingredient.id}.png`);
 
-  // Bereits generiert? Ueberspringen.
-  if (fs.existsSync(rawPath)) {
-    console.log(`${tag} ⏭  ${ingredient.name} — bereits vorhanden, ueberspringe`);
+  if (fs.existsSync(cleanPath)) {
+    console.log(`${tag} ⏭  ${ingredient.name} — bereits vorhanden`);
     return { id: ingredient.id, status: "skipped" };
   }
 
   const layerIcon = ingredient.render_layer === "over_cheese" ? "🔝" : "🧀";
-  console.log(`${tag} 🎨 ${ingredient.name} ${layerIcon} ${ingredient.render_layer}`);
+  console.log(`${tag} 🎨 ${ingredient.name} ${layerIcon}`);
   console.log(buildDebugSummary(ingredient).split("\n").map(l => `     ${l}`).join("\n"));
 
   const prompt = buildPrompt(ingredient);
@@ -245,98 +218,60 @@ async function processIngredient(ingredient, index, total) {
   try {
     const imageUrl = await generateImage(prompt);
     const duration = Date.now() - startTime;
+    console.log(`     ✓ DALL-E (${(duration / 1000).toFixed(1)}s)`);
 
-    console.log(`     ✓ Bild erhalten (${(duration / 1000).toFixed(1)}s)`);
-
-    // Raw speichern
     await downloadImage(imageUrl, rawPath);
-    console.log(`     ✓ Gespeichert: raw/${ingredient.id}.png`);
+    console.log(`     ✓ raw/${ingredient.id}.png`);
 
-    // Optional: remove.bg Cleanup
-    if (REMOVEBG_API_KEY) {
-      console.log(`     🧹 remove.bg Cleanup...`);
-      const cleaned = await cleanWithRemoveBg(rawPath, cleanPath);
-      if (cleaned) {
-        console.log(`     ✓ Gespeichert: clean/${ingredient.id}.png`);
-      } else {
-        // Fallback: Raw als Clean kopieren
-        fs.copyFileSync(rawPath, cleanPath);
-        console.log(`     ⚠ Fallback: Raw als Clean kopiert`);
-      }
-    } else {
-      // Ohne remove.bg: Raw nach Clean kopieren
-      fs.copyFileSync(rawPath, cleanPath);
-    }
+    await removeWhiteBackground(rawPath, cleanPath);
+    console.log(`     ✓ clean/${ingredient.id}.png`);
 
-    // Debug-Info
     saveDebugInfo(ingredient, prompt, imageUrl, duration);
-
     return { id: ingredient.id, status: "ok", duration };
   } catch (err) {
-    console.error(`     ✗ Fehler: ${err.message}`);
+    console.error(`     ✗ ${err.message}`);
     return { id: ingredient.id, status: "error", error: err.message };
   }
 }
 
 async function main() {
-  console.log("\n╔══════════════════════════════════════════╗");
-  console.log("║   Pizza Layer Generator                  ║");
-  console.log("║   Transparente Belag-Layer via DALL-E     ║");
+  console.log("╔══════════════════════════════════════════╗");
+  console.log("║  Pizza Layer Generator v2                ║");
+  console.log("║  Weiß→Transparent Post-Processing        ║");
   console.log("╚══════════════════════════════════════════╝\n");
 
   ensureDirs();
-
   const ingredients = loadIngredients();
-  console.log(`📋 ${ingredients.length} Zutaten geladen`);
-  console.log(`🤖 Modell: ${IMAGE_MODEL} | Groesse: ${IMAGE_SIZE} | Qualitaet: ${IMAGE_QUALITY}`);
-  console.log(`🧹 remove.bg: ${REMOVEBG_API_KEY ? "aktiv" : "deaktiviert"}`);
-  console.log(`⏱  Pause zwischen Aufrufen: ${DELAY_BETWEEN_CALLS / 1000}s`);
+
+  console.log(`📋 ${ingredients.length} Zutaten`);
+  console.log(`🤖 ${IMAGE_MODEL} | ${IMAGE_SIZE} | ${IMAGE_QUALITY}`);
+  console.log(`🧹 sharp: ${sharp ? "aktiv" : "NICHT installiert"}`);
   console.log("─".repeat(50));
 
   const results = [];
-
   for (let i = 0; i < ingredients.length; i++) {
     const result = await processIngredient(ingredients[i], i, ingredients.length);
     results.push(result);
-
-    // Pause zwischen API-Aufrufen (nicht nach dem letzten)
     if (i < ingredients.length - 1 && result.status === "ok") {
-      console.log(`     ⏳ Warte ${DELAY_BETWEEN_CALLS / 1000}s...\n`);
+      console.log(`     ⏳ ${DELAY_BETWEEN_CALLS / 1000}s...\n`);
       await sleep(DELAY_BETWEEN_CALLS);
     } else {
       console.log("");
     }
   }
 
-  // Zusammenfassung
   console.log("─".repeat(50));
-  const ok = results.filter((r) => r.status === "ok").length;
-  const skipped = results.filter((r) => r.status === "skipped").length;
-  const errors = results.filter((r) => r.status === "error").length;
-
-  console.log(`\n✅ Fertig: ${ok} generiert, ${skipped} uebersprungen, ${errors} Fehler`);
+  const ok = results.filter(r => r.status === "ok").length;
+  const skipped = results.filter(r => r.status === "skipped").length;
+  const errors = results.filter(r => r.status === "error").length;
+  console.log(`\n✅ ${ok} generiert, ${skipped} übersprungen, ${errors} Fehler\n`);
 
   if (errors > 0) {
-    console.log("\nFehlgeschlagene Zutaten:");
-    results
-      .filter((r) => r.status === "error")
-      .forEach((r) => console.log(`  ✗ ${r.id}: ${r.error}`));
+    console.log("Fehler:");
+    results.filter(r => r.status === "error").forEach(r => console.log(`  ✗ ${r.id}: ${r.error}`));
   }
 
-  console.log("\n→ Fuehre jetzt 'npm run manifest' aus, um das Layer-Manifest zu bauen.\n");
-
-  // Ergebnis-Report speichern
-  const reportPath = path.join(DIR_DEBUG, "_generation-report.json");
-  fs.writeFileSync(reportPath, JSON.stringify({
-    generatedAt: new Date().toISOString(),
-    model: IMAGE_MODEL,
-    size: IMAGE_SIZE,
-    quality: IMAGE_QUALITY,
-    results: results
-  }, null, 2));
+  fs.writeFileSync(path.join(DIR_DEBUG, "_report.json"), JSON.stringify({ results, generatedAt: new Date().toISOString() }, null, 2));
 }
 
-main().catch((err) => {
-  console.error("\nFataler Fehler:", err.message);
-  process.exit(1);
-});
+main().catch(err => { console.error("Fatal:", err.message); process.exit(1); });
