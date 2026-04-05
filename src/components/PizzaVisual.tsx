@@ -559,9 +559,10 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
   const isFamily = size.toLowerCase().includes("famili");
   const hasCheese = cheese !== "Ohne Käse";
 
-  // Wenn Käse gewählt → Käse-Bild als Basis, sonst Sauce-only Bild
+  // Runde Pizza: Käse-Bild als Basis wenn Käse gewählt, sonst Sauce-only
+  // Familienpizza: immer Sauce-Bild (Käse-Fotos gibts noch nicht)
   const sauceMap = isFamily ? FAMILY_SAUCE_IMAGES : SAUCE_IMAGES;
-  const baseImage = hasCheese
+  const baseImage = (!isFamily && hasCheese)
     ? (CHEESE_IMAGES[sauce] ?? CHEESE_IMAGES["Tomatensauce"])
     : (sauceMap[sauce] ?? sauceMap["Tomatensauce"]);
 
