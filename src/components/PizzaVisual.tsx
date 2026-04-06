@@ -719,12 +719,12 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 1b: Under-Cheese Bild-Toppings */}
         {underImageLayers.map((src) => (
-          <div key={src} className="absolute inset-[12%] z-[1] pointer-events-none">
+          <div key={src} className="absolute inset-[12%] z-[1] pointer-events-none rounded-full overflow-hidden">
             <Image
               src={src}
               alt="Topping"
               fill
-              className="object-contain"
+              className="object-cover"
               sizes="(max-width: 768px) 100vw, 384px"
             />
           </div>
@@ -746,12 +746,12 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 2b: Over-Cheese Bild-Toppings */}
         {overImageLayers.map((src) => (
-          <div key={src} className="absolute inset-[12%] z-[3] pointer-events-none">
+          <div key={src} className="absolute inset-[12%] z-[3] pointer-events-none rounded-full overflow-hidden">
             <Image
               src={src}
               alt="Topping"
               fill
-              className="object-contain"
+              className="object-cover"
               sizes="(max-width: 768px) 100vw, 384px"
             />
           </div>
