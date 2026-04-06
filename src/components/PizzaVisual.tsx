@@ -621,10 +621,22 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           priority
         />
 
+        {/* Käse-Overlay wenn Mozzarella oder veganer Käse gewählt */}
+        {hasCheese && !isFamily && (
+          <Image
+            src="/pizza/cheese-overlay.png"
+            alt="Käse"
+            fill
+            className="object-cover z-[1] pointer-events-none transition-opacity duration-500"
+            style={{ mixBlendMode: "screen" }}
+            sizes="(max-width: 768px) 100vw, 384px"
+          />
+        )}
+
         {/* SVG Toppings-Overlay */}
         <svg
           viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
-          className="absolute inset-0 w-full h-full z-[1]"
+          className="absolute inset-0 w-full h-full z-[2]"
           style={{ pointerEvents: "none" }}
         >
           <defs>
