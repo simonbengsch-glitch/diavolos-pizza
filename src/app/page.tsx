@@ -113,24 +113,24 @@ export default function HomePage() {
   return (
     <>
       {/* HEADER */}
-      <header className="fixed w-full bg-white/90 backdrop-blur-md shadow-sm z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <header className="fixed w-full bg-dark/95 backdrop-blur-md shadow-lg z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <Image src="/logo.png" alt="Diavolo's Pizza" width={180} height={48} priority className="object-contain h-12 w-auto" />
+            <Image src="/logo.png" alt="Diavolo's Pizza" width={140} height={40} priority className="object-contain h-10 w-auto brightness-0 invert" />
           </div>
-          <nav className="hidden md:flex gap-8 font-medium text-dark">
-            <a href="#menu" className="hover:text-diavolored transition-colors">Speisekarte</a>
-            <a href="/pizza-konfigurator" className="hover:text-diavolored transition-colors">Pizza-Konfigurator</a>
-            <a href="#contact" className="hover:text-diavolored transition-colors">Kontakt</a>
+          <nav className="flex gap-4 md:gap-8 font-medium text-gray-300 text-sm md:text-base">
+            <a href="#menu" className="hover:text-white transition-colors">Speisekarte</a>
+            <a href="/pizza-konfigurator" className="hover:text-white transition-colors hidden sm:inline">Konfigurator</a>
+            <a href="#contact" className="hover:text-white transition-colors hidden sm:inline">Kontakt</a>
           </nav>
           <button
             onClick={() => setCartOpen(true)}
-            className={`relative flex items-center gap-2 bg-dark text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition-all shadow-lg ${cartBounce ? "scale-110" : "scale-100"}`}
+            className={`relative flex items-center gap-2 bg-diavolored text-white px-4 py-2 rounded-full hover:bg-red-700 transition-all shadow-lg text-sm ${cartBounce ? "scale-110" : "scale-100"}`}
           >
             🛒
-            <span className="font-medium">{total.toFixed(2).replace(".", ",")} €</span>
+            <span className="font-medium hidden sm:inline">{total.toFixed(2).replace(".", ",")} €</span>
             {totalItems > 0 && (
-              <span className="absolute -top-2 -right-2 bg-diavolored text-white text-xs font-bold h-6 w-6 rounded-full flex items-center justify-center border-2 border-white">
+              <span className="absolute -top-2 -right-2 bg-white text-diavolored text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-diavolored">
                 {totalItems}
               </span>
             )}

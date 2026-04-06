@@ -138,38 +138,13 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
             </div>
           )}
 
-          {/* Bezahlmethode */}
+          {/* Bezahlmethode – nur Online */}
           <div>
             <p className="text-sm font-semibold text-dark mb-2">Bezahlmethode</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setPaymentType("online")}
-                className={`flex flex-col items-center gap-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${
-                  paymentType === "online"
-                    ? "border-diavolored bg-red-50 text-diavolored"
-                    : "border-gray-200 text-gray-400 hover:border-gray-300"
-                }`}
-              >
-                <span className="text-xl">💳</span>
-                Online bezahlen
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentType("in_person")}
-                className={`flex flex-col items-center gap-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${
-                  paymentType === "in_person"
-                    ? "border-diavolored bg-red-50 text-diavolored"
-                    : "border-gray-200 text-gray-400 hover:border-gray-300"
-                }`}
-              >
-                <span className="text-xl">💵</span>
-                Vor Ort bezahlen
-              </button>
+            <div className="flex items-center gap-3 py-3 px-4 rounded-xl border-2 border-diavolored bg-red-50">
+              <span className="text-xl">💳</span>
+              <span className="text-sm font-bold text-diavolored">Sichere Online-Zahlung via Stripe</span>
             </div>
-            {paymentType === "in_person" && (
-              <p className="text-xs text-gray-400 mt-2 text-center">Bar oder Karte beim {isDelivery ? "Fahrer" : "Abholen"}</p>
-            )}
           </div>
 
           {/* Anmerkungen */}
