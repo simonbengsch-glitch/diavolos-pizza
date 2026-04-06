@@ -86,6 +86,11 @@ const OVER_CHEESE_TOPPINGS = new Set([
   "Gorgonzola", "Frischkäse", "Parmesan/Grana", "Ei",
 ]);
 
+// Echte Bild-Layer für Toppings (erweiterbar für weitere Beläge)
+const TOPPING_IMAGES: Record<string, { src: string; layer: "under_cheese" | "over_cheese" }> = {
+  "Salami": { src: "/pizza/toppings/salami.png", layer: "under_cheese" },
+};
+
 // Zutaten → visuelle Darstellung – realistischer mit Variation
 const TOPPING_VISUALS: Record<string, {
   pieces: number;
@@ -593,11 +598,27 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
     return elements;
   };
 
-  // Toppings in under-cheese und over-cheese aufteilen
-  const splitExtras = (extras: { id: string; name: string }[]) => ({
-    under: extras.filter(e => !OVER_CHEESE_TOPPINGS.has(e.name)),
-    over:  extras.filter(e => OVER_CHEESE_TOPPINGS.has(e.name)),
-  });
+  // Extras aufteilen: Bild-Layer vs. SVG, under vs. over cheese
+  const splitExtras = (extras: { id: string; name: string }[]) => {
+    const underSvg: { id: string; name: string }[] = [];
+    const overSvg: { id: string; name: string }[] = [];
+    const underImages: string[] = [];
+    const overImages: string[] = [];
+
+    extras.forEach(e => {
+      const img = TOPPING_IMAGES[e.name];
+      if (img) {
+        // Hat echtes Bild → als Image-Layer
+        if (img.layer === "under_cheese") underImages.push(img.src);
+        else overImages.push(img.src);
+      } else {
+        // Kein Bild → SVG fallback
+        if (OVER_CHEESE_TOPPINGS.has(e.name)) overSvg.push(e);
+        else underSvg.push(e);
+      }
+    });
+    return { underSvg, overSvg, underImages, overImages };
+  };
 
   let underToppings: React.ReactNode[] = [];
   let overToppings: React.ReactNode[] = [];
@@ -605,21 +626,27 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
   let underRight: React.ReactNode[] = [];
   let overLeft: React.ReactNode[] = [];
   let overRight: React.ReactNode[] = [];
+  let underImageLayers: string[] = [];
+  let overImageLayers: string[] = [];
 
   if (halfHalf) {
     const leftSplit  = splitExtras(halfHalf.left);
     const rightSplit = splitExtras(halfHalf.right);
     const lPos = isFamily ? FAMILY_LEFT_POSITIONS  : LEFT_POSITIONS;
     const rPos = isFamily ? FAMILY_RIGHT_POSITIONS : RIGHT_POSITIONS;
-    underLeft  = buildToppings(leftSplit.under,  lPos);
-    overLeft   = buildToppings(leftSplit.over,   lPos);
-    underRight = buildToppings(rightSplit.under, rPos);
-    overRight  = buildToppings(rightSplit.over,  rPos);
+    underLeft  = buildToppings(leftSplit.underSvg,  lPos);
+    overLeft   = buildToppings(leftSplit.overSvg,   lPos);
+    underRight = buildToppings(rightSplit.underSvg, rPos);
+    overRight  = buildToppings(rightSplit.overSvg,  rPos);
+    underImageLayers = [...leftSplit.underImages, ...rightSplit.underImages];
+    overImageLayers = [...leftSplit.overImages, ...rightSplit.overImages];
   } else {
     const split = splitExtras(selectedExtras);
     const pos = isFamily ? FAMILY_POSITIONS : POSITIONS;
-    underToppings = buildToppings(split.under, pos);
-    overToppings  = buildToppings(split.over,  pos);
+    underToppings = buildToppings(split.underSvg, pos);
+    overToppings  = buildToppings(split.overSvg,  pos);
+    underImageLayers = split.underImages;
+    overImageLayers = split.overImages;
   }
 
   const isEmpty = halfHalf
@@ -690,6 +717,19 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           </g>
         </svg>
 
+        {/* Layer 1b: Under-Cheese Bild-Toppings */}
+        {underImageLayers.map((src) => (
+          <div key={src} className="absolute inset-[12%] z-[1] pointer-events-none">
+            <Image
+              src={src}
+              alt="Topping"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 384px"
+            />
+          </div>
+        ))}
+
         {/* Layer 2: Käse-Overlay – auf Sauce-Bereich begrenzt (ohne Kruste) */}
         {hasCheese && (
           <div className="absolute inset-[12%] z-[2] pointer-events-none">
@@ -704,10 +744,23 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           </div>
         )}
 
-        {/* Layer 3: Over-Cheese Toppings + Halb-Halb Trennlinie */}
+        {/* Layer 2b: Over-Cheese Bild-Toppings */}
+        {overImageLayers.map((src) => (
+          <div key={src} className="absolute inset-[12%] z-[3] pointer-events-none">
+            <Image
+              src={src}
+              alt="Topping"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 384px"
+            />
+          </div>
+        ))}
+
+        {/* Layer 4: Over-Cheese SVG Toppings + Halb-Halb Trennlinie */}
         <svg
           viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
-          className="absolute inset-0 w-full h-full z-[3]"
+          className="absolute inset-0 w-full h-full z-[4]"
           style={{ pointerEvents: "none" }}
         >
           <defs>
