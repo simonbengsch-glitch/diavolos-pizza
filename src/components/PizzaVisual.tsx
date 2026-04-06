@@ -698,7 +698,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
               alt="Käse"
               fill
               className="object-contain transition-opacity duration-500"
-              style={{ opacity: 0.85, mixBlendMode: "multiply", filter: "contrast(1.05) brightness(0.98)" }}
+              style={{ opacity: 0.65, mixBlendMode: "multiply", filter: "contrast(1.08) brightness(0.96)" }}
               sizes="(max-width: 768px) 100vw, 384px"
             />
           </div>
