@@ -80,6 +80,12 @@ const FAMILY_RIGHT_POSITIONS: [number, number][] = [
 ];
 
 
+// Toppings die ÜBER dem Käse liegen (frisch / nach dem Backen)
+const OVER_CHEESE_TOPPINGS = new Set([
+  "Rucola", "Tomaten frisch", "Kirschtomaten", "Mozzarella extra",
+  "Gorgonzola", "Frischkäse", "Parmesan/Grana", "Ei",
+]);
+
 // Zutaten → visuelle Darstellung – realistischer mit Variation
 const TOPPING_VISUALS: Record<string, {
   pieces: number;
@@ -587,15 +593,33 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
     return elements;
   };
 
-  let toppingElements: React.ReactNode[] = [];
-  let leftToppingElements: React.ReactNode[] = [];
-  let rightToppingElements: React.ReactNode[] = [];
+  // Toppings in under-cheese und over-cheese aufteilen
+  const splitExtras = (extras: { id: string; name: string }[]) => ({
+    under: extras.filter(e => !OVER_CHEESE_TOPPINGS.has(e.name)),
+    over:  extras.filter(e => OVER_CHEESE_TOPPINGS.has(e.name)),
+  });
+
+  let underToppings: React.ReactNode[] = [];
+  let overToppings: React.ReactNode[] = [];
+  let underLeft: React.ReactNode[] = [];
+  let underRight: React.ReactNode[] = [];
+  let overLeft: React.ReactNode[] = [];
+  let overRight: React.ReactNode[] = [];
 
   if (halfHalf) {
-    leftToppingElements  = buildToppings(halfHalf.left,  isFamily ? FAMILY_LEFT_POSITIONS  : LEFT_POSITIONS);
-    rightToppingElements = buildToppings(halfHalf.right, isFamily ? FAMILY_RIGHT_POSITIONS : RIGHT_POSITIONS);
+    const leftSplit  = splitExtras(halfHalf.left);
+    const rightSplit = splitExtras(halfHalf.right);
+    const lPos = isFamily ? FAMILY_LEFT_POSITIONS  : LEFT_POSITIONS;
+    const rPos = isFamily ? FAMILY_RIGHT_POSITIONS : RIGHT_POSITIONS;
+    underLeft  = buildToppings(leftSplit.under,  lPos);
+    overLeft   = buildToppings(leftSplit.over,   lPos);
+    underRight = buildToppings(rightSplit.under, rPos);
+    overRight  = buildToppings(rightSplit.over,  rPos);
   } else {
-    toppingElements = buildToppings(selectedExtras, isFamily ? FAMILY_POSITIONS : POSITIONS);
+    const split = splitExtras(selectedExtras);
+    const pos = isFamily ? FAMILY_POSITIONS : POSITIONS;
+    underToppings = buildToppings(split.under, pos);
+    overToppings  = buildToppings(split.over,  pos);
   }
 
   const isEmpty = halfHalf
@@ -621,59 +645,104 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           priority
         />
 
-        {/* Käse-Overlay wenn Mozzarella oder veganer Käse gewählt */}
-        {hasCheese && !isFamily && (
-          <Image
-            src="/pizza/cheese-overlay.png"
-            alt="Käse"
-            fill
-            className="object-cover z-[1] pointer-events-none transition-opacity duration-500"
-            sizes="(max-width: 768px) 100vw, 384px"
-          />
-        )}
-
-        {/* SVG Toppings-Overlay */}
+        {/* Layer 1: Under-Cheese Toppings */}
         <svg
           viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
-          className="absolute inset-0 w-full h-full z-[2]"
+          className="absolute inset-0 w-full h-full z-[1]"
           style={{ pointerEvents: "none" }}
         >
           <defs>
             {isFamily ? (
               <>
-                <clipPath id="pizzaClip">
+                <clipPath id="underClip">
                   <rect x="30" y="30" width="540" height="340" rx="20" />
                 </clipPath>
-                <clipPath id="leftHalfClip">
+                <clipPath id="underLeftClip">
                   <rect x="0" y="0" width="300" height="400" />
                 </clipPath>
-                <clipPath id="rightHalfClip">
+                <clipPath id="underRightClip">
                   <rect x="300" y="0" width="300" height="400" />
                 </clipPath>
               </>
             ) : (
               <>
-                <clipPath id="pizzaClip">
+                <clipPath id="underClip">
                   <circle cx="200" cy="215" r="105" />
                 </clipPath>
-                <clipPath id="leftHalfClip">
+                <clipPath id="underLeftClip">
                   <rect x="0" y="0" width="200" height="400" />
                 </clipPath>
-                <clipPath id="rightHalfClip">
+                <clipPath id="underRightClip">
                   <rect x="200" y="0" width="200" height="400" />
                 </clipPath>
               </>
             )}
           </defs>
-
-          <g clipPath="url(#pizzaClip)">
+          <g clipPath="url(#underClip)">
             {halfHalf ? (
               <>
-                <g clipPath="url(#leftHalfClip)">{leftToppingElements}</g>
-                <g clipPath="url(#rightHalfClip)">{rightToppingElements}</g>
+                <g clipPath="url(#underLeftClip)">{underLeft}</g>
+                <g clipPath="url(#underRightClip)">{underRight}</g>
               </>
             ) : (
-              <g>{toppingElements}</g>
+              <g>{underToppings}</g>
+            )}
+          </g>
+        </svg>
+
+        {/* Layer 2: Käse-Overlay */}
+        {hasCheese && (
+          <Image
+            src="/pizza/cheese-overlay.png"
+            alt="Käse"
+            fill
+            className="object-cover z-[2] pointer-events-none transition-opacity duration-500"
+            style={{ opacity: 0.88 }}
+            sizes="(max-width: 768px) 100vw, 384px"
+          />
+        )}
+
+        {/* Layer 3: Over-Cheese Toppings + Halb-Halb Trennlinie */}
+        <svg
+          viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
+          className="absolute inset-0 w-full h-full z-[3]"
+          style={{ pointerEvents: "none" }}
+        >
+          <defs>
+            {isFamily ? (
+              <>
+                <clipPath id="overClip">
+                  <rect x="30" y="30" width="540" height="340" rx="20" />
+                </clipPath>
+                <clipPath id="overLeftClip">
+                  <rect x="0" y="0" width="300" height="400" />
+                </clipPath>
+                <clipPath id="overRightClip">
+                  <rect x="300" y="0" width="300" height="400" />
+                </clipPath>
+              </>
+            ) : (
+              <>
+                <clipPath id="overClip">
+                  <circle cx="200" cy="215" r="105" />
+                </clipPath>
+                <clipPath id="overLeftClip">
+                  <rect x="0" y="0" width="200" height="400" />
+                </clipPath>
+                <clipPath id="overRightClip">
+                  <rect x="200" y="0" width="200" height="400" />
+                </clipPath>
+              </>
+            )}
+          </defs>
+          <g clipPath="url(#overClip)">
+            {halfHalf ? (
+              <>
+                <g clipPath="url(#overLeftClip)">{overLeft}</g>
+                <g clipPath="url(#overRightClip)">{overRight}</g>
+              </>
+            ) : (
+              <g>{overToppings}</g>
             )}
           </g>
 
