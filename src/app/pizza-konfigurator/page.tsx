@@ -19,6 +19,22 @@ export default function PizzaKonfiguratorPage() {
   const [leftExtras, setLeftExtras] = useState<Extra[]>([]);
   const [rightExtras, setRightExtras] = useState<Extra[]>([]);
   const [added, setAdded] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  // Warenkorb-Anzahl aus sessionStorage lesen
+  useEffect(() => {
+    const updateCount = () => {
+      try {
+        const raw = sessionStorage.getItem("pizza_cart");
+        const items = raw ? JSON.parse(raw) : [];
+        setCartCount(items.reduce((sum: number, i: { quantity: number }) => sum + i.quantity, 0));
+      } catch { setCartCount(0); }
+    };
+    updateCount();
+    window.addEventListener("storage", updateCount);
+    return () => window.removeEventListener("storage", updateCount);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -97,6 +113,7 @@ export default function PizzaKonfiguratorPage() {
       quantity: 1,
     });
     sessionStorage.setItem("pizza_cart", JSON.stringify(existing));
+    setCartCount(existing.reduce((sum: number, i: { quantity: number }) => sum + i.quantity, 0));
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
   };
@@ -110,11 +127,52 @@ export default function PizzaKonfiguratorPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-dark text-white px-6 py-4 flex items-center justify-between sticky top-0 z-40">
-        <a href="/" className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Diavolo's Pizza" width={160} height={48} className="object-contain h-12 w-auto brightness-0 invert" />
-        </a>
-        <a href="/" className="text-gray-300 hover:text-white text-sm transition-colors">← Zur Speisekarte</a>
+      <header className="bg-dark/95 backdrop-blur-md text-white sticky top-0 z-40 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+          <a href="/" className="flex items-center">
+            <Image src="/logo.png" alt="Diavolo's Pizza" width={120} height={36} className="object-contain h-9 w-auto brightness-0 invert" />
+          </a>
+
+          <nav className="hidden md:flex gap-6 font-medium text-gray-300 text-sm">
+            <a href="/" className="hover:text-white transition-colors">Speisekarte</a>
+            <a href="/pizza-konfigurator" className="text-white">Konfigurator</a>
+            <a href="/#contact" className="hover:text-white transition-colors">Kontakt</a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <a
+              href="/"
+              className="relative flex items-center gap-2 bg-diavolored text-white px-4 py-2 rounded-full hover:bg-red-700 transition-all shadow-lg text-sm"
+            >
+              🛒
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-white text-diavolored text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-diavolored">
+                  {cartCount}
+                </span>
+              )}
+            </a>
+
+            {/* Burger-Menü Button (mobil) */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden flex flex-col gap-1.5 p-2"
+              aria-label="Menü"
+            >
+              <span className={`block w-6 h-0.5 bg-white transition-all ${menuOpen ? "rotate-45 translate-y-2" : ""}`} />
+              <span className={`block w-6 h-0.5 bg-white transition-all ${menuOpen ? "opacity-0" : ""}`} />
+              <span className={`block w-6 h-0.5 bg-white transition-all ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menü */}
+        {menuOpen && (
+          <nav className="md:hidden bg-dark border-t border-gray-700 px-4 py-4 flex flex-col gap-3 text-gray-300 font-medium">
+            <a href="/" className="hover:text-white transition-colors py-2">Speisekarte</a>
+            <a href="/pizza-konfigurator" className="text-white py-2">Konfigurator</a>
+            <a href="/#contact" className="hover:text-white transition-colors py-2">Kontakt</a>
+          </nav>
+        )}
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
