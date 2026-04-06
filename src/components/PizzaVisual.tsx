@@ -696,7 +696,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
             src="/pizza/cheese-overlay.png"
             alt="Käse"
             fill
-            className="object-cover z-[2] pointer-events-none transition-opacity duration-500"
+            className="object-contain z-[2] pointer-events-none transition-opacity duration-500"
             style={{ opacity: 0.88 }}
             sizes="(max-width: 768px) 100vw, 384px"
           />
