@@ -690,16 +690,18 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           </g>
         </svg>
 
-        {/* Layer 2: Käse-Overlay */}
+        {/* Layer 2: Käse-Overlay – auf Sauce-Bereich begrenzt (ohne Kruste) */}
         {hasCheese && (
-          <Image
-            src="/pizza/cheese-overlay.png"
-            alt="Käse"
-            fill
-            className="object-contain z-[2] pointer-events-none transition-opacity duration-500"
-            style={{ opacity: 0.88 }}
-            sizes="(max-width: 768px) 100vw, 384px"
-          />
+          <div className="absolute inset-[12%] z-[2] pointer-events-none">
+            <Image
+              src="/pizza/cheese-overlay.png"
+              alt="Käse"
+              fill
+              className="object-contain transition-opacity duration-500"
+              style={{ opacity: 0.88 }}
+              sizes="(max-width: 768px) 100vw, 384px"
+            />
+          </div>
         )}
 
         {/* Layer 3: Over-Cheese Toppings + Halb-Halb Trennlinie */}
