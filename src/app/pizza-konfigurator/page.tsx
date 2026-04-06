@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Extra, PizzaSize } from "@/types";
+import { CartItem, CustomerDetails, Extra, PizzaSize } from "@/types";
 import PizzaVisual from "@/components/PizzaVisual";
+import CheckoutModal from "@/components/CheckoutModal";
 
 const SAUCES = ["Tomatensauce", "Ohne Sauce", "Pesto", "Frischkäse"];
 const BASE_PRICE = 9.00;
+const MIN_ORDER = 15.00;
 
 export default function PizzaKonfiguratorPage() {
   const [sizes, setSizes] = useState<PizzaSize[]>([]);
@@ -20,21 +22,45 @@ export default function PizzaKonfiguratorPage() {
   const [rightExtras, setRightExtras] = useState<Extra[]>([]);
   const [added, setAdded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(sessionStorage.getItem("pizza_cart") || "[]"); } catch { return []; }
+  });
+  const [cartBounce, setCartBounce] = useState(false);
 
-  // Warenkorb-Anzahl aus sessionStorage lesen
+  // Cart sync mit sessionStorage
   useEffect(() => {
-    const updateCount = () => {
-      try {
-        const raw = sessionStorage.getItem("pizza_cart");
-        const items = raw ? JSON.parse(raw) : [];
-        setCartCount(items.reduce((sum: number, i: { quantity: number }) => sum + i.quantity, 0));
-      } catch { setCartCount(0); }
-    };
-    updateCount();
-    window.addEventListener("storage", updateCount);
-    return () => window.removeEventListener("storage", updateCount);
+    sessionStorage.setItem("pizza_cart", JSON.stringify(cart));
+  }, [cart]);
+
+  const cartTotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const progressPct = Math.min((cartTotal / MIN_ORDER) * 100, 100);
+  const missing = Math.max(MIN_ORDER - cartTotal, 0);
+
+  const removeFromCart = useCallback((cartKey: string) => {
+    setCart((prev) => {
+      const item = prev.find((i) => i.cartKey === cartKey);
+      if (!item) return prev;
+      if (item.quantity > 1) return prev.map((i) => i.cartKey === cartKey ? { ...i, quantity: i.quantity - 1 } : i);
+      return prev.filter((i) => i.cartKey !== cartKey);
+    });
   }, []);
+
+  const handleCheckout = async (details: CustomerDetails) => {
+    const res = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cart, customer: details }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      sessionStorage.removeItem("pizza_cart");
+      window.location.href = data.url;
+    } else alert("Fehler beim Erstellen der Zahlung. Bitte versuche es erneut.");
+  };
 
   useEffect(() => {
     Promise.all([
@@ -97,8 +123,7 @@ export default function PizzaKonfiguratorPage() {
   };
 
   const handleAddToCart = () => {
-    const existing = JSON.parse(sessionStorage.getItem("pizza_cart") || "[]");
-    existing.push({
+    const newItem: CartItem = {
       cartKey: `konfigurator-${Date.now()}`,
       productId: "konfigurator",
       name: "Pizza nach Wahl",
@@ -111,9 +136,10 @@ export default function PizzaKonfiguratorPage() {
         : null,
       unitPrice: totalPrice,
       quantity: 1,
-    });
-    sessionStorage.setItem("pizza_cart", JSON.stringify(existing));
-    setCartCount(existing.reduce((sum: number, i: { quantity: number }) => sum + i.quantity, 0));
+    };
+    setCart((prev) => [...prev, newItem]);
+    setCartBounce(true);
+    setTimeout(() => setCartBounce(false), 300);
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
   };
@@ -140,17 +166,18 @@ export default function PizzaKonfiguratorPage() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <a
-              href="/"
-              className="relative flex items-center gap-2 bg-diavolored text-white px-4 py-2 rounded-full hover:bg-red-700 transition-all shadow-lg text-sm"
+            <button
+              onClick={() => setCartOpen(true)}
+              className={`relative flex items-center gap-2 bg-diavolored text-white px-4 py-2 rounded-full hover:bg-red-700 transition-all shadow-lg text-sm ${cartBounce ? "scale-110" : "scale-100"}`}
             >
               🛒
-              {cartCount > 0 && (
+              <span className="font-medium hidden sm:inline">{cartTotal.toFixed(2).replace(".", ",")} €</span>
+              {totalItems > 0 && (
                 <span className="absolute -top-2 -right-2 bg-white text-diavolored text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-diavolored">
-                  {cartCount}
+                  {totalItems}
                 </span>
               )}
-            </a>
+            </button>
 
             {/* Burger-Menü Button (mobil) */}
             <button
@@ -471,6 +498,64 @@ export default function PizzaKonfiguratorPage() {
           </div>
         </div>
       </div>
+
+      {/* WARENKORB OVERLAY */}
+      {cartOpen && <div className="fixed inset-0 bg-black/50" onClick={() => setCartOpen(false)} style={{ zIndex: 60 }} />}
+
+      {/* WARENKORB SIDEBAR */}
+      <div className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white flex flex-col shadow-2xl"
+        style={{ zIndex: 70, transform: cartOpen ? "translateX(0)" : "translateX(100%)", transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }}>
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+          <h2 className="font-heading font-bold text-2xl text-dark">Dein Warenkorb</h2>
+          <button onClick={() => setCartOpen(false)} className="text-gray-400 hover:text-diavolored text-2xl leading-none">✕</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {cart.length === 0 ? (
+            <p className="text-center text-gray-400 mt-16 text-lg">Dein Warenkorb ist noch leer. 🍕</p>
+          ) : (
+            cart.map((item) => (
+              <div key={item.cartKey} className="flex justify-between items-start bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex-1 mr-3">
+                  <h4 className="font-bold text-dark text-sm leading-tight">{item.displayName}</h4>
+                  <p className="text-xs text-gray-500 mt-0.5">{item.quantity}× {item.unitPrice.toFixed(2).replace(".", ",")} €</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-bold text-diavologreen">{(item.unitPrice * item.quantity).toFixed(2).replace(".", ",")} €</span>
+                  <button onClick={() => removeFromCart(item.cartKey)} className="text-red-400 hover:text-red-600 w-7 h-7 rounded-full bg-red-50 flex items-center justify-center font-bold transition-colors">−</button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="p-6 border-t border-gray-100 bg-gray-50">
+          <div className="mb-4">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Mindestbestellwert</span>
+              <span>{cartTotal.toFixed(2).replace(".", ",")} € / 15,00 €</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div className={`h-2.5 rounded-full transition-all duration-500 ${cartTotal >= MIN_ORDER ? "bg-diavologreen" : "bg-diavolored"}`} style={{ width: `${progressPct}%` }} />
+            </div>
+            {missing > 0 && <p className="text-xs text-diavolored mt-1">Noch {missing.toFixed(2).replace(".", ",")} € bis zum Mindestbestellwert</p>}
+          </div>
+          <div className="flex justify-between items-center mb-5">
+            <span className="font-bold text-lg text-dark">Gesamtsumme:</span>
+            <span className="font-bold text-2xl text-dark">{cartTotal.toFixed(2).replace(".", ",")} €</span>
+          </div>
+          <button
+            disabled={cartTotal < MIN_ORDER}
+            onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}
+            className={`w-full font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 ${cartTotal >= MIN_ORDER ? "bg-diavologreen text-white hover:bg-green-700 shadow-lg" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+          >
+            🔒 Sicher zur Kasse (Stripe)
+          </button>
+        </div>
+      </div>
+
+      {/* CHECKOUT MODAL */}
+      {checkoutOpen && <CheckoutModal cart={cart} total={cartTotal} onClose={() => setCheckoutOpen(false)} onSubmit={handleCheckout} />}
     </div>
   );
 }
