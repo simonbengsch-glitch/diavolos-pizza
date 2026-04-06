@@ -628,7 +628,6 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
             alt="Käse"
             fill
             className="object-cover z-[1] pointer-events-none transition-opacity duration-500"
-            style={{ mixBlendMode: "screen" }}
             sizes="(max-width: 768px) 100vw, 384px"
           />
         )}
