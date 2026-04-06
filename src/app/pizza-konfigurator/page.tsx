@@ -112,7 +112,7 @@ export default function PizzaKonfiguratorPage() {
       {/* Header */}
       <header className="bg-dark text-white px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <a href="/" className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Diavolo's Pizza" width={160} height={48} className="object-contain h-12 w-auto" />
+          <Image src="/logo.png" alt="Diavolo's Pizza" width={160} height={48} className="object-contain h-12 w-auto brightness-0 invert" />
         </a>
         <a href="/" className="text-gray-300 hover:text-white text-sm transition-colors">← Zur Speisekarte</a>
       </header>
