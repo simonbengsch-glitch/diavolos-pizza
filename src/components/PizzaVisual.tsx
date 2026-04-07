@@ -129,6 +129,7 @@ const TOPPING_IMAGES: Record<string, { src: string; layer: "under_cheese" | "ove
   "Schafskäse":      { src: "/pizza/toppings/schafskaese.png",     layer: "over_cheese" },
   "Käse, vegan":     { src: "/pizza/toppings/kaese-vegan.png",     layer: "over_cheese" },
   "Büffelmozzarella":{ src: "/pizza/toppings/bueffelmozzarella.png",layer: "over_cheese" },
+  "Mozzarella":      { src: "/pizza/toppings/mozzarella-extra.png",layer: "over_cheese" },
   "Basilikum-Pesto": { src: "/pizza/toppings/basilikum-pesto.png", layer: "over_cheese" },
   "Trüffel-Pesto":   { src: "/pizza/toppings/trueffel-pesto.png",  layer: "over_cheese" },
   "Walnüssen":       { src: "/pizza/toppings/walnuesse.png",       layer: "over_cheese" },
