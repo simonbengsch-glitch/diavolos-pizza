@@ -88,7 +88,50 @@ const OVER_CHEESE_TOPPINGS = new Set([
 
 // Echte Bild-Layer für Toppings (erweiterbar für weitere Beläge)
 const TOPPING_IMAGES: Record<string, { src: string; layer: "under_cheese" | "over_cheese" }> = {
-  "Salami": { src: "/pizza/toppings/salami.png", layer: "under_cheese" },
+  // Under-Cheese (vor dem Backen)
+  "Salami":          { src: "/pizza/toppings/salami.png",          layer: "under_cheese" },
+  "Salami, scharf":  { src: "/pizza/toppings/salami-scharf.png",   layer: "under_cheese" },
+  "Speck":           { src: "/pizza/toppings/speck.png",           layer: "under_cheese" },
+  "Hinterschinken":  { src: "/pizza/toppings/hinterschinken.png",  layer: "under_cheese" },
+  "Parmaschinken":   { src: "/pizza/toppings/parmaschinken.png",   layer: "under_cheese" },
+  "Hackfleisch":     { src: "/pizza/toppings/hackfleisch.png",     layer: "under_cheese" },
+  "Thunfisch":       { src: "/pizza/toppings/thunfisch.png",       layer: "under_cheese" },
+  "Sardellen":       { src: "/pizza/toppings/sardellen.png",       layer: "under_cheese" },
+  "Lachs":           { src: "/pizza/toppings/lachs.png",           layer: "under_cheese" },
+  "Garnelen":        { src: "/pizza/toppings/garnelen.png",        layer: "under_cheese" },
+  "Meeresfrüchten":  { src: "/pizza/toppings/meeresfruechte.png",  layer: "under_cheese" },
+  "Champignons":     { src: "/pizza/toppings/champignons.png",     layer: "under_cheese" },
+  "Steinpilzen":     { src: "/pizza/toppings/steinpilze.png",      layer: "under_cheese" },
+  "Zwiebeln":        { src: "/pizza/toppings/zwiebeln.png",        layer: "under_cheese" },
+  "Knoblauch":       { src: "/pizza/toppings/knoblauch.png",       layer: "under_cheese" },
+  "Paprika":         { src: "/pizza/toppings/paprika.png",         layer: "under_cheese" },
+  "Peperoni, mild":  { src: "/pizza/toppings/peperoni-mild.png",   layer: "under_cheese" },
+  "Peperoni, scharf":{ src: "/pizza/toppings/peperoni-scharf.png", layer: "under_cheese" },
+  "Oliven":          { src: "/pizza/toppings/oliven.png",          layer: "under_cheese" },
+  "Kapern":          { src: "/pizza/toppings/kapern.png",          layer: "under_cheese" },
+  "Mais":            { src: "/pizza/toppings/mais.png",            layer: "under_cheese" },
+  "Ananas":          { src: "/pizza/toppings/ananas.png",          layer: "under_cheese" },
+  "Spinat":          { src: "/pizza/toppings/spinat.png",          layer: "under_cheese" },
+  "Broccoli":        { src: "/pizza/toppings/broccoli.png",        layer: "under_cheese" },
+  "Artischocken":    { src: "/pizza/toppings/artischocken.png",    layer: "under_cheese" },
+  "Auberginen":      { src: "/pizza/toppings/auberginen.png",      layer: "under_cheese" },
+  "Zucchini":        { src: "/pizza/toppings/zucchini.png",        layer: "under_cheese" },
+  "Bohnen":          { src: "/pizza/toppings/bohnen.png",          layer: "under_cheese" },
+  "Spiegelei":       { src: "/pizza/toppings/spiegelei.png",       layer: "under_cheese" },
+  "Ei, gekocht":     { src: "/pizza/toppings/ei-gekocht.png",      layer: "under_cheese" },
+
+  // Over-Cheese (frisch / nach dem Backen)
+  "Rucola":          { src: "/pizza/toppings/rucola.png",          layer: "over_cheese" },
+  "Kirschtomaten":   { src: "/pizza/toppings/kirschtomaten.png",   layer: "over_cheese" },
+  "Frischkäse":      { src: "/pizza/toppings/frischkaese.png",     layer: "over_cheese" },
+  "Gorgonzola":      { src: "/pizza/toppings/gorgonzola.png",      layer: "over_cheese" },
+  "Parmesan":        { src: "/pizza/toppings/parmesan.png",        layer: "over_cheese" },
+  "Schafskäse":      { src: "/pizza/toppings/schafskaese.png",     layer: "over_cheese" },
+  "Käse, vegan":     { src: "/pizza/toppings/kaese-vegan.png",     layer: "over_cheese" },
+  "Büffelmozzarella":{ src: "/pizza/toppings/bueffelmozzarella.png",layer: "over_cheese" },
+  "Basilikum-Pesto": { src: "/pizza/toppings/basilikum-pesto.png", layer: "over_cheese" },
+  "Trüffel-Pesto":   { src: "/pizza/toppings/trueffel-pesto.png",  layer: "over_cheese" },
+  "Walnüssen":       { src: "/pizza/toppings/walnuesse.png",       layer: "over_cheese" },
 };
 
 // Zutaten → visuelle Darstellung – realistischer mit Variation
