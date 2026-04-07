@@ -111,7 +111,7 @@ const TOPPING_IMAGES: Record<string, { src: string; layer: "under_cheese" | "ove
   "Kapern":          { src: "/pizza/toppings/kapern.png",          layer: "under_cheese" },
   "Mais":            { src: "/pizza/toppings/mais.png",            layer: "under_cheese" },
   "Ananas":          { src: "/pizza/toppings/ananas.png",          layer: "under_cheese" },
-  "Spinat":          { src: "/pizza/toppings/spinat.png",          layer: "under_cheese" },
+  "Spinat":          { src: "/pizza/toppings/spinat.png",          layer: "over_cheese" },
   "Broccoli":        { src: "/pizza/toppings/broccoli.png",        layer: "under_cheese" },
   "Artischocken":    { src: "/pizza/toppings/artischocken.png",    layer: "under_cheese" },
   "Auberginen":      { src: "/pizza/toppings/auberginen.png",      layer: "under_cheese" },
