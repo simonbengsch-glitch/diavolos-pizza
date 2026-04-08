@@ -642,53 +642,29 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
     return elements;
   };
 
-  // Extras aufteilen: Bild-Layer vs. SVG, under vs. over cheese
+  // Extras zu Bild-Layern (ohne Bild → nicht angezeigt)
   const splitExtras = (extras: { id: string; name: string }[]) => {
-    const underSvg: { id: string; name: string }[] = [];
-    const overSvg: { id: string; name: string }[] = [];
     const underImages: string[] = [];
     const overImages: string[] = [];
-
     extras.forEach(e => {
       const img = TOPPING_IMAGES[e.name];
-      if (img) {
-        // Hat echtes Bild → als Image-Layer
-        if (img.layer === "under_cheese") underImages.push(img.src);
-        else overImages.push(img.src);
-      } else {
-        // Kein Bild → SVG fallback
-        if (OVER_CHEESE_TOPPINGS.has(e.name)) overSvg.push(e);
-        else underSvg.push(e);
-      }
+      if (!img) return;
+      if (img.layer === "under_cheese") underImages.push(img.src);
+      else overImages.push(img.src);
     });
-    return { underSvg, overSvg, underImages, overImages };
+    return { underImages, overImages };
   };
 
-  let underToppings: React.ReactNode[] = [];
-  let overToppings: React.ReactNode[] = [];
-  let underLeft: React.ReactNode[] = [];
-  let underRight: React.ReactNode[] = [];
-  let overLeft: React.ReactNode[] = [];
-  let overRight: React.ReactNode[] = [];
   let underImageLayers: string[] = [];
   let overImageLayers: string[] = [];
 
   if (halfHalf) {
     const leftSplit  = splitExtras(halfHalf.left);
     const rightSplit = splitExtras(halfHalf.right);
-    const lPos = isFamily ? FAMILY_LEFT_POSITIONS  : LEFT_POSITIONS;
-    const rPos = isFamily ? FAMILY_RIGHT_POSITIONS : RIGHT_POSITIONS;
-    underLeft  = buildToppings(leftSplit.underSvg,  lPos);
-    overLeft   = buildToppings(leftSplit.overSvg,   lPos);
-    underRight = buildToppings(rightSplit.underSvg, rPos);
-    overRight  = buildToppings(rightSplit.overSvg,  rPos);
     underImageLayers = [...leftSplit.underImages, ...rightSplit.underImages];
     overImageLayers = [...leftSplit.overImages, ...rightSplit.overImages];
   } else {
     const split = splitExtras(selectedExtras);
-    const pos = isFamily ? FAMILY_POSITIONS : POSITIONS;
-    underToppings = buildToppings(split.underSvg, pos);
-    overToppings  = buildToppings(split.overSvg,  pos);
     underImageLayers = split.underImages;
     overImageLayers = split.overImages;
   }
@@ -716,52 +692,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           priority
         />
 
-        {/* Layer 1: Under-Cheese Toppings */}
-        <svg
-          viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
-          className="absolute inset-0 w-full h-full z-[1]"
-          style={{ pointerEvents: "none" }}
-        >
-          <defs>
-            {isFamily ? (
-              <>
-                <clipPath id="underClip">
-                  <rect x="30" y="30" width="540" height="340" rx="20" />
-                </clipPath>
-                <clipPath id="underLeftClip">
-                  <rect x="0" y="0" width="300" height="400" />
-                </clipPath>
-                <clipPath id="underRightClip">
-                  <rect x="300" y="0" width="300" height="400" />
-                </clipPath>
-              </>
-            ) : (
-              <>
-                <clipPath id="underClip">
-                  <circle cx="200" cy="215" r="105" />
-                </clipPath>
-                <clipPath id="underLeftClip">
-                  <rect x="0" y="0" width="200" height="400" />
-                </clipPath>
-                <clipPath id="underRightClip">
-                  <rect x="200" y="0" width="200" height="400" />
-                </clipPath>
-              </>
-            )}
-          </defs>
-          <g clipPath="url(#underClip)">
-            {halfHalf ? (
-              <>
-                <g clipPath="url(#underLeftClip)">{underLeft}</g>
-                <g clipPath="url(#underRightClip)">{underRight}</g>
-              </>
-            ) : (
-              <g>{underToppings}</g>
-            )}
-          </g>
-        </svg>
-
-        {/* Layer 1b: Under-Cheese Bild-Toppings */}
+        {/* Layer 1: Under-Cheese Bild-Toppings */}
         {underImageLayers.map((src) => (
           <div key={src} className="absolute inset-[12%] z-[1] pointer-events-none rounded-full overflow-hidden">
             <Image
@@ -788,7 +719,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           </div>
         )}
 
-        {/* Layer 2b: Over-Cheese Bild-Toppings */}
+        {/* Layer 3: Over-Cheese Bild-Toppings */}
         {overImageLayers.map((src) => (
           <div key={src} className="absolute inset-[12%] z-[3] pointer-events-none rounded-full overflow-hidden">
             <Image
@@ -801,77 +732,36 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           </div>
         ))}
 
-        {/* Layer 4: Over-Cheese SVG Toppings + Halb-Halb Trennlinie */}
-        <svg
-          viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
-          className="absolute inset-0 w-full h-full z-[4]"
-          style={{ pointerEvents: "none" }}
-        >
-          <defs>
+        {/* Layer 4: Halb-Halb Trennlinie */}
+        {halfHalf && (
+          <svg
+            viewBox={isFamily ? "0 0 600 400" : "0 0 400 400"}
+            className="absolute inset-0 w-full h-full z-[4]"
+            style={{ pointerEvents: "none" }}
+          >
             {isFamily ? (
               <>
-                <clipPath id="overClip">
-                  <rect x="30" y="30" width="540" height="340" rx="20" />
-                </clipPath>
-                <clipPath id="overLeftClip">
-                  <rect x="0" y="0" width="300" height="400" />
-                </clipPath>
-                <clipPath id="overRightClip">
-                  <rect x="300" y="0" width="300" height="400" />
-                </clipPath>
+                <line x1="300" y1="20" x2="300" y2="380" stroke="white" strokeWidth="3"
+                  strokeDasharray="12,6" opacity="0.85"
+                  style={{ filter: "drop-shadow(0 0 3px rgba(0,0,0,0.4))" }} />
+                <text x="150" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
+                  style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Links</text>
+                <text x="450" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
+                  style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Rechts</text>
               </>
             ) : (
               <>
-                <clipPath id="overClip">
-                  <circle cx="200" cy="215" r="105" />
-                </clipPath>
-                <clipPath id="overLeftClip">
-                  <rect x="0" y="0" width="200" height="400" />
-                </clipPath>
-                <clipPath id="overRightClip">
-                  <rect x="200" y="0" width="200" height="400" />
-                </clipPath>
+                <line x1="200" y1="20" x2="200" y2="380" stroke="white" strokeWidth="3"
+                  strokeDasharray="12,6" opacity="0.85"
+                  style={{ filter: "drop-shadow(0 0 3px rgba(0,0,0,0.4))" }} />
+                <text x="105" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
+                  style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Links</text>
+                <text x="295" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
+                  style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Rechts</text>
               </>
             )}
-          </defs>
-          <g clipPath="url(#overClip)">
-            {halfHalf ? (
-              <>
-                <g clipPath="url(#overLeftClip)">{overLeft}</g>
-                <g clipPath="url(#overRightClip)">{overRight}</g>
-              </>
-            ) : (
-              <g>{overToppings}</g>
-            )}
-          </g>
-
-          {/* Halb-Halb Trennlinie */}
-          {halfHalf && (
-            <>
-              {isFamily ? (
-                <>
-                  <line x1="300" y1="20" x2="300" y2="380" stroke="white" strokeWidth="3"
-                    strokeDasharray="12,6" opacity="0.85"
-                    style={{ filter: "drop-shadow(0 0 3px rgba(0,0,0,0.4))" }} />
-                  <text x="150" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
-                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Links</text>
-                  <text x="450" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
-                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Rechts</text>
-                </>
-              ) : (
-                <>
-                  <line x1="200" y1="20" x2="200" y2="380" stroke="white" strokeWidth="3"
-                    strokeDasharray="12,6" opacity="0.85"
-                    style={{ filter: "drop-shadow(0 0 3px rgba(0,0,0,0.4))" }} />
-                  <text x="105" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
-                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Links</text>
-                  <text x="295" y="390" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold"
-                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}>½ Rechts</text>
-                </>
-              )}
-            </>
-          )}
-        </svg>
+          </svg>
+        )}
 
       </div>
 
