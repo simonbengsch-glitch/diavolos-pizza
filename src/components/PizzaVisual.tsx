@@ -708,9 +708,9 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 2: Käse-Overlay – auf Sauce-Bereich begrenzt (ohne Kruste) */}
         {hasCheese && (
-          <div className={`absolute z-[2] pointer-events-none ${isFamily ? "inset-[8%]" : "inset-[15%]"}`}>
+          <div className={`absolute z-[2] pointer-events-none ${isFamily ? "inset-[8%] rounded-2xl overflow-hidden" : "inset-[15%]"}`}>
             <Image
-              src={isFamily ? "/pizza/toppings/family/cheese-overlay.png" : "/pizza/cheese-overlay.png"}
+              src="/pizza/cheese-overlay.png"
               alt="Käse"
               fill
               className={`${isFamily ? "object-cover" : "object-contain"} transition-opacity duration-500`}
