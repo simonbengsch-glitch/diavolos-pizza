@@ -127,7 +127,7 @@ const TOPPING_IMAGES: Record<string, { src: string; familySrc?: string; layer: "
   "Gorgonzola":      { src: "/pizza/toppings/gorgonzola.png",      familySrc: "/pizza/toppings/family/gorgonzola.png",      layer: "over_cheese" },
   "Parmesan":        { src: "/pizza/toppings/parmesan.png",        familySrc: "/pizza/toppings/family/parmesan.png",        layer: "over_cheese" },
   "Schafskäse":      { src: "/pizza/toppings/schafskaese.png",     familySrc: "/pizza/toppings/family/schafskaese.png",     layer: "over_cheese" },
-  "Büffelmozzarella":{ src: "/pizza/toppings/bueffelmozzarella.png",                                                        layer: "over_cheese" },
+  "Büffelmozzarella":{ src: "/pizza/toppings/bueffelmozzarella.png", familySrc: "/pizza/toppings/family/bueffelmozzarella.png", layer: "over_cheese" },
   "Mozzarella":      { src: "/pizza/toppings/mozzarella-extra.png", familySrc: "/pizza/toppings/family/mozzarella-extra.png", layer: "over_cheese" },
   "Basilikum-Pesto": { src: "/pizza/toppings/basilikum-pesto.png", familySrc: "/pizza/toppings/family/basilikum-pesto.png", layer: "over_cheese" },
   "Trüffel":         { src: "/pizza/toppings/family/trueffel.png",  familySrc: "/pizza/toppings/family/trueffel.png",        layer: "over_cheese" },
