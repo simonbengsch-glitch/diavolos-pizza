@@ -128,7 +128,7 @@ const TOPPING_IMAGES: Record<string, { src: string; familySrc?: string; layer: "
   "Parmesan":        { src: "/pizza/toppings/parmesan.png",        familySrc: "/pizza/toppings/family/parmesan.png",        layer: "over_cheese" },
   "Schafskäse":      { src: "/pizza/toppings/schafskaese.png",     familySrc: "/pizza/toppings/family/schafskaese.png",     layer: "over_cheese" },
   "Büffelmozzarella":{ src: "/pizza/toppings/bueffelmozzarella.png",                                                        layer: "over_cheese" },
-  "Mozzarella":      { src: "/pizza/toppings/mozzarella-extra.png",                                                         layer: "over_cheese" },
+  "Mozzarella":      { src: "/pizza/toppings/mozzarella-extra.png", familySrc: "/pizza/toppings/family/mozzarella-extra.png", layer: "over_cheese" },
   "Basilikum-Pesto": { src: "/pizza/toppings/basilikum-pesto.png", familySrc: "/pizza/toppings/family/basilikum-pesto.png", layer: "over_cheese" },
   "Trüffel":         { src: "/pizza/toppings/family/trueffel.png",  familySrc: "/pizza/toppings/family/trueffel.png",        layer: "over_cheese" },
   "Trüffel-Pesto":   { src: "/pizza/toppings/trueffel-pesto.png",  familySrc: "/pizza/toppings/family/trueffel-pesto.png",  layer: "over_cheese" },
@@ -710,10 +710,10 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
         {hasCheese && (
           <div className={`absolute z-[2] pointer-events-none ${isFamily ? "inset-[8%]" : "inset-[15%]"}`}>
             <Image
-              src="/pizza/cheese-overlay.png"
+              src={isFamily ? "/pizza/toppings/family/cheese-overlay.png" : "/pizza/cheese-overlay.png"}
               alt="Käse"
               fill
-              className="object-contain transition-opacity duration-500"
+              className={`${isFamily ? "object-cover" : "object-contain"} transition-opacity duration-500`}
               style={{ opacity: 0.55, mixBlendMode: "multiply", filter: "contrast(1.08) brightness(0.96)" }}
               sizes="(max-width: 768px) 100vw, 384px"
             />
