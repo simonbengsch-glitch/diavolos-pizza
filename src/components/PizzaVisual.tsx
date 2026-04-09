@@ -130,6 +130,7 @@ const TOPPING_IMAGES: Record<string, { src: string; familySrc?: string; layer: "
   "Büffelmozzarella":{ src: "/pizza/toppings/bueffelmozzarella.png",                                                        layer: "over_cheese" },
   "Mozzarella":      { src: "/pizza/toppings/mozzarella-extra.png",                                                         layer: "over_cheese" },
   "Basilikum-Pesto": { src: "/pizza/toppings/basilikum-pesto.png", familySrc: "/pizza/toppings/family/basilikum-pesto.png", layer: "over_cheese" },
+  "Trüffel":         { src: "/pizza/toppings/family/trueffel.png",  familySrc: "/pizza/toppings/family/trueffel.png",        layer: "over_cheese" },
   "Trüffel-Pesto":   { src: "/pizza/toppings/trueffel-pesto.png",  familySrc: "/pizza/toppings/family/trueffel-pesto.png",  layer: "over_cheese" },
   "Walnüssen":       { src: "/pizza/toppings/walnuesse.png",       familySrc: "/pizza/toppings/family/walnuesse.png",       layer: "over_cheese" },
 };
@@ -694,7 +695,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 1: Under-Cheese Bild-Toppings */}
         {underImageLayers.map((src) => (
-          <div key={src} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "inset-[5%] rounded-2xl" : "inset-[12%] rounded-full"}`}>
+          <div key={src} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "inset-[8%] rounded-2xl" : "inset-[15%] rounded-full"}`}>
             <Image
               src={src}
               alt="Topping"
@@ -707,7 +708,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 2: Käse-Overlay – auf Sauce-Bereich begrenzt (ohne Kruste) */}
         {hasCheese && (
-          <div className={`absolute z-[2] pointer-events-none ${isFamily ? "inset-[5%]" : "inset-[12%]"}`}>
+          <div className={`absolute z-[2] pointer-events-none ${isFamily ? "inset-[8%]" : "inset-[15%]"}`}>
             <Image
               src="/pizza/cheese-overlay.png"
               alt="Käse"
@@ -721,7 +722,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 3: Over-Cheese Bild-Toppings */}
         {overImageLayers.map((src) => (
-          <div key={src} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "inset-[5%] rounded-2xl" : "inset-[12%] rounded-full"}`}>
+          <div key={src} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "inset-[8%] rounded-2xl" : "inset-[15%] rounded-full"}`}>
             <Image
               src={src}
               alt="Topping"
