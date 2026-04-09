@@ -86,6 +86,19 @@ const OVER_CHEESE_TOPPINGS = new Set([
   "Gorgonzola", "Frischkäse", "Parmesan/Grana", "Ei",
 ]);
 
+// Family-Bilder die kleiner sind und weniger inset brauchen (in %)
+const FAMILY_INSET_OVERRIDE: Record<string, string> = {
+  "walnuesse":        "6%",
+  "lachs":            "6%",
+  "gorgonzola":       "8%",
+  "hackfleisch":      "8%",
+  "bueffelmozzarella":"8%",
+  "ei-gekocht":       "8%",
+  "parmesan":         "8%",
+  "mais":             "10%",
+  "knoblauch":        "10%",
+};
+
 // Echte Bild-Layer für Toppings (rund + family)
 const TOPPING_IMAGES: Record<string, { src: string; familySrc?: string; layer: "under_cheese" | "over_cheese" }> = {
   // Under-Cheese (vor dem Backen)
@@ -644,20 +657,25 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
   // Extras zu Bild-Layern — Family nutzt familySrc wenn vorhanden
   const splitExtras = (extras: { id: string; name: string }[]) => {
-    const underImages: string[] = [];
-    const overImages: string[] = [];
+    const underImages: { src: string; inset: string }[] = [];
+    const overImages: { src: string; inset: string }[] = [];
     extras.forEach(e => {
       const img = TOPPING_IMAGES[e.name];
       if (!img) return;
       const src = (isFamily && img.familySrc) ? img.familySrc : img.src;
-      if (img.layer === "under_cheese") underImages.push(src);
-      else overImages.push(src);
+      // Family-Bilder: individuellen inset bestimmen
+      const filename = src.split("/").pop()?.replace(".png", "") ?? "";
+      const inset = isFamily
+        ? (FAMILY_INSET_OVERRIDE[filename] ?? "14%")
+        : "12%";
+      if (img.layer === "under_cheese") underImages.push({ src, inset });
+      else overImages.push({ src, inset });
     });
     return { underImages, overImages };
   };
 
-  let underImageLayers: string[] = [];
-  let overImageLayers: string[] = [];
+  let underImageLayers: { src: string; inset: string }[] = [];
+  let overImageLayers: { src: string; inset: string }[] = [];
 
   if (halfHalf) {
     const leftSplit  = splitExtras(halfHalf.left);
@@ -694,10 +712,11 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
         />
 
         {/* Layer 1: Under-Cheese Bild-Toppings */}
-        {underImageLayers.map((src) => (
-          <div key={src} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "inset-[14%] rounded-xl" : "inset-[12%] rounded-full"}`}>
+        {underImageLayers.map((item) => (
+          <div key={item.src} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "rounded-xl" : "rounded-full"}`}
+            style={{ inset: isFamily ? item.inset : "12%" }}>
             <Image
-              src={src}
+              src={item.src}
               alt="Topping"
               fill
               className="object-cover"
@@ -721,10 +740,11 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
         )}
 
         {/* Layer 3: Over-Cheese Bild-Toppings */}
-        {overImageLayers.map((src) => (
-          <div key={src} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "inset-[14%] rounded-xl" : "inset-[12%] rounded-full"}`}>
+        {overImageLayers.map((item) => (
+          <div key={item.src} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "rounded-xl" : "rounded-full"}`}
+            style={{ inset: isFamily ? item.inset : "12%" }}>
             <Image
-              src={src}
+              src={item.src}
               alt="Topping"
               fill
               className="object-cover"
