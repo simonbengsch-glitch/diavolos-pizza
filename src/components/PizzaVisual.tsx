@@ -695,7 +695,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 1: Under-Cheese Bild-Toppings */}
         {underImageLayers.map((src) => (
-          <div key={src} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "inset-[8%] rounded-2xl" : "inset-[15%] rounded-full"}`}>
+          <div key={src} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "inset-[10%] rounded-2xl" : "inset-[18%] rounded-full"}`}>
             <Image
               src={src}
               alt="Topping"
@@ -708,13 +708,13 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 2: Käse-Overlay – auf Sauce-Bereich begrenzt (ohne Kruste) */}
         {hasCheese && (
-          <div className={`absolute z-[2] pointer-events-none ${isFamily ? "inset-[8%] rounded-2xl overflow-hidden" : "inset-[15%]"}`}>
+          <div className={`absolute z-[2] pointer-events-none overflow-hidden ${isFamily ? "inset-[10%] rounded-2xl" : "inset-[18%] rounded-full"}`}>
             <Image
-              src="/pizza/cheese-overlay.png"
+              src={isFamily ? "/pizza/toppings/family/cheese-overlay.png" : "/pizza/cheese-overlay.png"}
               alt="Käse"
               fill
-              className={`${isFamily ? "object-cover" : "object-contain"} transition-opacity duration-500`}
-              style={{ opacity: 0.55, mixBlendMode: "multiply", filter: "contrast(1.08) brightness(0.96)" }}
+              className="object-cover transition-opacity duration-500"
+              style={{ opacity: 0.5, mixBlendMode: "multiply", filter: "contrast(1.05) brightness(0.97)" }}
               sizes="(max-width: 768px) 100vw, 384px"
             />
           </div>
@@ -722,7 +722,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 3: Over-Cheese Bild-Toppings */}
         {overImageLayers.map((src) => (
-          <div key={src} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "inset-[8%] rounded-2xl" : "inset-[15%] rounded-full"}`}>
+          <div key={src} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "inset-[10%] rounded-2xl" : "inset-[18%] rounded-full"}`}>
             <Image
               src={src}
               alt="Topping"
