@@ -8,6 +8,7 @@ import ExtrasModal from "@/components/ExtrasModal";
 
 const CATEGORIES = ["Pizza", "Pasta & Mehr", "Vorspeise", "Salate", "Dessert", "Getränke"];
 const MIN_ORDER = 15.00;
+const SERVICE_FEE = 0.39;
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -359,16 +360,22 @@ export default function HomePage() {
             </div>
             {missing > 0 && <p className="text-xs text-diavolored mt-1">Noch {missing.toFixed(2).replace(".", ",")} € bis zum Mindestbestellwert</p>}
           </div>
+          {cart.length > 0 && (
+            <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <span>Servicegebühr</span>
+              <span>+{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
+            </div>
+          )}
           <div className="flex justify-between items-center mb-5">
             <span className="font-bold text-lg text-dark">Gesamtsumme:</span>
-            <span className="font-bold text-2xl text-dark">{total.toFixed(2).replace(".", ",")} €</span>
+            <span className="font-bold text-2xl text-dark">{(total + (cart.length > 0 ? SERVICE_FEE : 0)).toFixed(2).replace(".", ",")} €</span>
           </div>
           <button
             disabled={total < MIN_ORDER}
             onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}
             className={`w-full font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 ${total >= MIN_ORDER ? "bg-diavologreen text-white hover:bg-green-700 shadow-lg" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
           >
-            🔒 Sicher zur Kasse (Stripe)
+            🔒 Sicher zur Kasse
           </button>
         </div>
       </div>

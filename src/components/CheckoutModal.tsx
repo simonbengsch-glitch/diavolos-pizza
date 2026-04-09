@@ -15,7 +15,7 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
   const [orderType, setOrderType] = useState<"delivery" | "pickup">("delivery");
   const [paymentType, setPaymentType] = useState<"online" | "in_person">("online");
   const [form, setForm] = useState({
-    name: "", email: "", phone: "", street: "", city: "Ingolstadt", zip: "", notes: "",
+    name: "", email: "", phone: "", street: "", city: "Ingolstadt", zip: "", notes: "", wunschzeit: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -138,13 +138,51 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
             </div>
           )}
 
-          {/* Bezahlmethode – nur Online */}
+          {/* Bezahlmethode */}
           <div>
             <p className="text-sm font-semibold text-dark mb-2">Bezahlmethode</p>
-            <div className="flex items-center gap-3 py-3 px-4 rounded-xl border-2 border-diavolored bg-red-50">
-              <span className="text-xl">💳</span>
-              <span className="text-sm font-bold text-diavolored">Sichere Online-Zahlung via Stripe</span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentType("online")}
+                className={`flex flex-col items-center gap-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${
+                  paymentType === "online"
+                    ? "border-diavolored bg-red-50 text-diavolored"
+                    : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <span className="text-xl">💳</span>
+                Online bezahlen
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentType("in_person")}
+                className={`flex flex-col items-center gap-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${
+                  paymentType === "in_person"
+                    ? "border-diavolored bg-red-50 text-diavolored"
+                    : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <span className="text-xl">💵</span>
+                Barzahlung
+              </button>
             </div>
+            {paymentType === "in_person" && (
+              <p className="text-xs text-gray-400 mt-2 text-center">Bar oder Karte beim {isDelivery ? "Fahrer" : "Abholen"}</p>
+            )}
+          </div>
+
+          {/* Wunschzeit */}
+          <div>
+            <label className="block text-sm font-semibold text-dark mb-1">Wunschzeit (optional)</label>
+            <input
+              type="datetime-local"
+              name="wunschzeit"
+              value={form.wunschzeit}
+              onChange={handleChange}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-diavolored focus:ring-2 focus:ring-diavolored/10 transition-all"
+            />
+            <p className="text-xs text-gray-400 mt-1">Leer lassen = schnellstmöglich</p>
           </div>
 
           {/* Anmerkungen */}

@@ -7,8 +7,29 @@ import PizzaVisual from "@/components/PizzaVisual";
 import CheckoutModal from "@/components/CheckoutModal";
 
 const SAUCES = ["Tomatensauce", "Ohne Sauce", "Pesto", "Frischkäse"];
-const BASE_PRICE = 9.00;
+const BASE_PRICE = 10.99;
+const SERVICE_FEE = 0.39;
 const MIN_ORDER = 15.00;
+
+// Extras-Multiplikator je nach Größe
+const SIZE_MULTIPLIER: Record<string, number> = {
+  "30": 1,
+  "35": 1.3,
+  "40": 1.3,
+  "45": 1.6,
+  "50": 2,
+  "family": 2,
+};
+
+function getMultiplier(label: string): number {
+  if (label.toLowerCase().includes("famili")) return SIZE_MULTIPLIER["family"];
+  const match = label.match(/(\d+)\s*cm/i);
+  if (match) {
+    const cm = match[1];
+    return SIZE_MULTIPLIER[cm] ?? 1;
+  }
+  return 1;
+}
 
 export default function PizzaKonfiguratorPage() {
   const [sizes, setSizes] = useState<PizzaSize[]>([]);
@@ -50,6 +71,19 @@ export default function PizzaKonfiguratorPage() {
   }, []);
 
   const handleCheckout = async (details: CustomerDetails) => {
+    if (details.paymentType === "in_person") {
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart, customer: details }),
+      });
+      const data = await res.json();
+      if (data.orderId) {
+        sessionStorage.removeItem("pizza_cart");
+        window.location.href = `/bestellung?order_id=${data.orderId}`;
+      } else alert("Fehler beim Aufgeben der Bestellung. Bitte versuche es erneut.");
+      return;
+    }
     const res = await fetch("/api/create-checkout-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -107,7 +141,20 @@ export default function PizzaKonfiguratorPage() {
     ? [...leftExtras, ...rightExtras.filter((re) => !leftExtras.some((le) => le.id === re.id))]
     : selectedExtras;
 
-  const extrasPrice = activeExtras.reduce((s, e) => s + e.price, 0);
+  const multiplier = getMultiplier(selectedSize?.label ?? "30 cm");
+
+  // Extras-Preis: Bei Halb-Halb zahlt man pro Hälfte 50%, auf beiden Hälften = 100%
+  const calcExtraPrice = (extra: Extra, isHalf: boolean) =>
+    Math.round(extra.price * multiplier * (isHalf ? 0.5 : 1) * 100) / 100;
+
+  let extrasPrice = 0;
+  if (halfHalfMode) {
+    leftExtras.forEach(e => { extrasPrice += calcExtraPrice(e, true); });
+    rightExtras.forEach(e => { extrasPrice += calcExtraPrice(e, true); });
+  } else {
+    activeExtras.forEach(e => { extrasPrice += calcExtraPrice(e, false); });
+  }
+
   const sizeExtraPrice = selectedSize?.extra_price ?? 0;
   const totalPrice = BASE_PRICE + sizeExtraPrice + extrasPrice;
 
@@ -134,7 +181,7 @@ export default function PizzaKonfiguratorPage() {
       halfHalf: halfHalfMode
         ? { left: leftExtras.map((e) => ({ id: e.id, name: e.name, price: e.price })), right: rightExtras.map((e) => ({ id: e.id, name: e.name, price: e.price })) }
         : null,
-      unitPrice: totalPrice,
+      unitPrice: totalPrice + SERVICE_FEE,
       quantity: 1,
     };
     setCart((prev) => [...prev, newItem]);
@@ -235,7 +282,7 @@ export default function PizzaKonfiguratorPage() {
                     <span className="font-bold text-dark block text-xs">{size.label}</span>
                     <span className="text-gray-500 text-xs">
                       {size.extra_price === 0
-                        ? `${BASE_PRICE.toFixed(2).replace(".", ",")} €`
+                        ? "Standard"
                         : `+${size.extra_price.toFixed(2).replace(".", ",")} €`}
                     </span>
                   </button>
@@ -276,7 +323,7 @@ export default function PizzaKonfiguratorPage() {
                 Käse
               </h2>
               <div className="grid grid-cols-2 gap-2">
-                {[{label:"Mozzarella",emoji:"🧀"},{label:"Käse, vegan",emoji:"🌱"}].map(({label,emoji}) => (
+                {[{label:"Mozzarella",emoji:"🧀"},{label:"Ohne Käse",emoji:"❌"}].map(({label,emoji}) => (
                   <button
                     key={label}
                     onClick={() => setSelectedCheese(label)}
@@ -354,7 +401,7 @@ export default function PizzaKonfiguratorPage() {
                                 <span className={`font-semibold ${selected ? (half === "left" ? "text-diavolored" : "text-diavologreen") : "text-dark"}`}>
                                   {selected ? "✓ " : ""}{extra.name}
                                 </span>
-                                <span className="text-gray-400 ml-1">+{extra.price.toFixed(2).replace(".", ",")}€</span>
+                                <span className="text-gray-400 ml-1">+{calcExtraPrice(extra, halfHalfMode).toFixed(2).replace(".", ",")}€</span>
                               </button>
                             );
                           })}
@@ -465,17 +512,41 @@ export default function PizzaKonfiguratorPage() {
                     <span>+{sizeExtraPrice.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}
-                {activeExtras.map((e) => (
-                  <div key={e.id} className="flex justify-between text-sm">
-                    <span className="text-gray-500">{e.name}</span>
-                    <span>+{e.price.toFixed(2).replace(".", ",")} €</span>
-                  </div>
-                ))}
+                {halfHalfMode ? (
+                  <>
+                    {leftExtras.map((e) => (
+                      <div key={`l-${e.id}`} className="flex justify-between text-sm">
+                        <span className="text-gray-500">½ {e.name}</span>
+                        <span>+{calcExtraPrice(e, true).toFixed(2).replace(".", ",")} €</span>
+                      </div>
+                    ))}
+                    {rightExtras.map((e) => (
+                      <div key={`r-${e.id}`} className="flex justify-between text-sm">
+                        <span className="text-gray-500">½ {e.name}</span>
+                        <span>+{calcExtraPrice(e, true).toFixed(2).replace(".", ",")} €</span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  activeExtras.map((e) => (
+                    <div key={e.id} className="flex justify-between text-sm">
+                      <span className="text-gray-500">{e.name}</span>
+                      <span>+{calcExtraPrice(e, false).toFixed(2).replace(".", ",")} €</span>
+                    </div>
+                  ))
+                )}
+                {multiplier > 1 && (
+                  <p className="text-xs text-gray-400 italic">Belag-Aufpreis ×{multiplier} für {selectedSize?.label}</p>
+                )}
+                <div className="flex justify-between text-sm text-gray-400">
+                  <span>Servicegebühr</span>
+                  <span>+{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
+                </div>
               </div>
 
               <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-xl mb-4">
                 <span>Gesamt</span>
-                <span className="text-diavologreen">{totalPrice.toFixed(2).replace(".", ",")} €</span>
+                <span className="text-diavologreen">{(totalPrice + SERVICE_FEE).toFixed(2).replace(".", ",")} €</span>
               </div>
 
               {added ? (
@@ -487,7 +558,7 @@ export default function PizzaKonfiguratorPage() {
                   onClick={handleAddToCart}
                   className="w-full bg-diavolored text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors shadow-lg text-lg"
                 >
-                  🛒 In den Warenkorb — {totalPrice.toFixed(2).replace(".", ",")} €
+                  🛒 In den Warenkorb — {(totalPrice + SERVICE_FEE).toFixed(2).replace(".", ",")} €
                 </button>
               )}
 
@@ -539,6 +610,10 @@ export default function PizzaKonfiguratorPage() {
               <div className={`h-2.5 rounded-full transition-all duration-500 ${cartTotal >= MIN_ORDER ? "bg-diavologreen" : "bg-diavolored"}`} style={{ width: `${progressPct}%` }} />
             </div>
             {missing > 0 && <p className="text-xs text-diavolored mt-1">Noch {missing.toFixed(2).replace(".", ",")} € bis zum Mindestbestellwert</p>}
+          </div>
+          <div className="flex justify-between text-sm text-gray-400 mb-2">
+            <span>Servicegebühr</span>
+            <span>{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
           </div>
           <div className="flex justify-between items-center mb-5">
             <span className="font-bold text-lg text-dark">Gesamtsumme:</span>
