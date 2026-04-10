@@ -4,17 +4,19 @@ import Image from "next/image";
 
 // Pizza-Basis-Bilder je nach Sauce (rund = Standard, rechteckig = Familienpizza)
 const SAUCE_IMAGES: Record<string, string> = {
-  "Tomatensauce": "/pizza/base-tomate.png",
-  "Ohne Sauce":   "/pizza/base-ohne-sauce.png",
-  "Pesto":        "/pizza/base-pesto.png",
-  "Frischkäse":   "/pizza/base-frischkaese.png",
+  "Tomatensauce":  "/pizza/base-tomate.png",
+  "Ohne Sauce":    "/pizza/base-ohne-sauce.png",
+  "Pesto":         "/pizza/base-pesto.png",
+  "Trüffel-Pesto": "/pizza/base-pesto.png",
+  "Frischkäse":    "/pizza/base-frischkaese.png",
 };
 
 const FAMILY_SAUCE_IMAGES: Record<string, string> = {
-  "Tomatensauce": "/pizza/family-tomate.png",
-  "Ohne Sauce":   "/pizza/family-ohne-sauce.png",
-  "Pesto":        "/pizza/family-pesto.png",
-  "Frischkäse":   "/pizza/family-frischkaese.png",
+  "Tomatensauce":  "/pizza/family-tomate.png",
+  "Ohne Sauce":    "/pizza/family-ohne-sauce.png",
+  "Pesto":         "/pizza/family-pesto.png",
+  "Trüffel-Pesto": "/pizza/family-pesto.png",
+  "Frischkäse":    "/pizza/family-frischkaese.png",
 };
 
 // Echte Käse-Bilder als Overlay (gleich für Mozzarella und veganen Käse)
@@ -662,7 +664,7 @@ interface Props {
 
 export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfHalf }: Props) {
   const isFamily = size.toLowerCase().includes("famili");
-  const hasCheese = cheese !== "Ohne Käse";
+  const hasCheese = true; // Mozzarella ist immer Standard
 
   // Immer Sauce-Bild als Basis verwenden (Käse-Bilder haben Artefakte)
   const sauceMap = isFamily ? FAMILY_SAUCE_IMAGES : SAUCE_IMAGES;

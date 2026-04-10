@@ -6,7 +6,7 @@ import { CartItem, CustomerDetails, Extra, PizzaSize } from "@/types";
 import PizzaVisual from "@/components/PizzaVisual";
 import CheckoutModal from "@/components/CheckoutModal";
 
-const SAUCES = ["Tomatensauce", "Ohne Sauce", "Pesto", "Frischkäse"];
+const SAUCES = ["Tomatensauce", "Ohne Sauce", "Pesto", "Frischkäse", "Trüffel-Pesto"];
 const BASE_PRICE = 10.99;
 const SERVICE_FEE = 0.99;
 const MIN_ORDER = 15.00;
@@ -308,32 +308,9 @@ export default function PizzaKonfiguratorPage() {
                     }`}
                   >
                     <span className="text-base">
-                      {sauce === "Tomatensauce" ? "🍅" : sauce === "Pesto" ? "🌿" : sauce === "Frischkäse" ? "🧀" : "⬜"}
+                      {sauce === "Tomatensauce" ? "🍅" : sauce === "Pesto" ? "🌿" : sauce === "Trüffel-Pesto" ? "🍄" : sauce === "Frischkäse" ? "🧀" : "⬜"}
                     </span>
                     {sauce}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Käse */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <h2 className="font-heading font-bold text-lg text-dark mb-3 flex items-center gap-2">
-                <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
-                Käse
-              </h2>
-              <div className="grid grid-cols-2 gap-2">
-                {[{label:"Mozzarella",emoji:"🧀"},{label:"Ohne Käse",emoji:"❌"}].map(({label,emoji}) => (
-                  <button
-                    key={label}
-                    onClick={() => setSelectedCheese(label)}
-                    className={`p-3 rounded-xl border-2 text-sm font-semibold transition-all flex items-center gap-2 ${
-                      selectedCheese === label
-                        ? "border-diavologreen bg-diavologreen/5 text-diavologreen"
-                        : "border-gray-200 text-dark hover:border-gray-300"
-                    }`}
-                  >
-                    {emoji} {label}
                   </button>
                 ))}
               </div>
@@ -362,7 +339,7 @@ export default function PizzaKonfiguratorPage() {
             {/* Beläge */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
               <h2 className="font-heading font-bold text-lg text-dark mb-1 flex items-center gap-2">
-                <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">4</span>
+                <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
                 Beläge
                 {!halfHalfMode && selectedExtras.length > 0 && (
                   <span className="ml-auto bg-diavolored text-white text-xs font-bold px-2 py-0.5 rounded-full">
