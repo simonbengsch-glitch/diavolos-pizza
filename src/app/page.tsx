@@ -8,7 +8,7 @@ import ExtrasModal from "@/components/ExtrasModal";
 
 const CATEGORIES = ["Pizza", "Pasta & Mehr", "Vorspeise", "Salate", "Dessert", "Getränke"];
 const MIN_ORDER = 15.00;
-const SERVICE_FEE = 0.39;
+const SERVICE_FEE = 0.99;
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);

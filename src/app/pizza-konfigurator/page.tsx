@@ -8,7 +8,7 @@ import CheckoutModal from "@/components/CheckoutModal";
 
 const SAUCES = ["Tomatensauce", "Ohne Sauce", "Pesto", "Frischkäse"];
 const BASE_PRICE = 10.99;
-const SERVICE_FEE = 0.39;
+const SERVICE_FEE = 0.99;
 const MIN_ORDER = 15.00;
 
 // Extras-Multiplikator je nach Größe

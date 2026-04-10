@@ -18,6 +18,10 @@ export default function AdminProductsPage() {
   const [editProduct, setEditProduct] = useState<Partial<Product> | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [priceModal, setPriceModal] = useState(false);
+  const [priceAmount, setPriceAmount] = useState("1.00");
+  const [priceCategories, setPriceCategories] = useState<string[]>(["Pizza"]);
+  const [priceUpdating, setPriceUpdating] = useState(false);
   const router = useRouter();
 
   const fetchProducts = async () => {
@@ -55,6 +59,30 @@ export default function AdminProductsPage() {
     fetchProducts();
   };
 
+  const handleBulkPriceUpdate = async () => {
+    setPriceUpdating(true);
+    const amount = parseFloat(priceAmount);
+    const toUpdate = products.filter(p => priceCategories.includes(p.category));
+    for (const p of toUpdate) {
+      const newPrice = Math.round((Number(p.base_price) + amount) * 100) / 100;
+      if (newPrice < 0) continue;
+      await fetch(`/api/admin/products/${p.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base_price: newPrice }),
+      });
+    }
+    setPriceUpdating(false);
+    setPriceModal(false);
+    fetchProducts();
+  };
+
+  const togglePriceCategory = (cat: string) => {
+    setPriceCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
+
   const filtered = products.filter((p) => p.category === filterCat);
 
   return (
@@ -66,6 +94,12 @@ export default function AdminProductsPage() {
         </div>
         <div className="flex gap-3">
           <a href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">← Bestellungen</a>
+          <button
+            onClick={() => setPriceModal(true)}
+            className="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-600 transition-colors"
+          >
+            💰 Preise anpassen
+          </button>
           <button
             onClick={() => { setIsNew(true); setEditProduct({ ...EMPTY }); }}
             className="bg-diavologreen text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors"
@@ -185,6 +219,74 @@ export default function AdminProductsPage() {
               <button onClick={handleSave} disabled={saving}
                 className="w-full bg-diavolored text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50">
                 {saving ? "Speichern..." : "Speichern"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Preisanpassungs-Modal */}
+      {priceModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 80 }}>
+          <div className="absolute inset-0 bg-black/60" onClick={() => setPriceModal(false)} />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="font-heading font-bold text-xl text-dark">Preise anpassen</h2>
+              <button onClick={() => setPriceModal(false)} className="text-gray-400 hover:text-diavolored text-2xl">✕</button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div>
+                <label className="text-sm font-bold text-dark block mb-2">Betrag (+ oder -)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.50"
+                    value={priceAmount}
+                    onChange={(e) => setPriceAmount(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-lg font-bold text-center focus:outline-none focus:border-diavolored"
+                  />
+                  <span className="text-lg font-bold text-dark">€</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Positiv = erhöhen, Negativ = senken</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-dark block mb-2">Kategorien auswählen</label>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map((cat) => {
+                    const active = priceCategories.includes(cat);
+                    const count = products.filter(p => p.category === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => togglePriceCategory(cat)}
+                        className={`px-3 py-2 rounded-xl text-sm font-bold transition-all border-2 ${
+                          active ? "border-diavolored bg-red-50 text-diavolored" : "border-gray-200 text-gray-400"
+                        }`}
+                      >
+                        {cat} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <p className="text-sm font-bold text-amber-800">
+                  {priceCategories.length === 0
+                    ? "Keine Kategorie ausgewählt"
+                    : `${products.filter(p => priceCategories.includes(p.category)).length} Produkte werden um ${parseFloat(priceAmount) >= 0 ? "+" : ""}${priceAmount} € angepasst`
+                  }
+                </p>
+              </div>
+
+              <button
+                onClick={handleBulkPriceUpdate}
+                disabled={priceUpdating || priceCategories.length === 0}
+                className="w-full bg-amber-500 text-white font-bold py-4 rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50"
+              >
+                {priceUpdating ? "Wird aktualisiert..." : "Preise jetzt anpassen"}
               </button>
             </div>
           </div>

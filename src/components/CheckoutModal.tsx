@@ -14,6 +14,7 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState<"delivery" | "pickup">("delivery");
   const [paymentType, setPaymentType] = useState<"online" | "in_person">("online");
+  const [deliveryTiming, setDeliveryTiming] = useState<"asap" | "scheduled">("asap");
   const [form, setForm] = useState({
     name: "", email: "", phone: "", street: "", city: "Ingolstadt", zip: "", notes: "", wunschzeit: "",
   });
@@ -172,17 +173,71 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
             )}
           </div>
 
-          {/* Wunschzeit */}
+          {/* Lieferzeit */}
           <div>
-            <label className="block text-sm font-semibold text-dark mb-1">Wunschzeit (optional)</label>
-            <input
-              type="datetime-local"
-              name="wunschzeit"
-              value={form.wunschzeit}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-diavolored focus:ring-2 focus:ring-diavolored/10 transition-all"
-            />
-            <p className="text-xs text-gray-400 mt-1">Leer lassen = schnellstmöglich</p>
+            <p className="text-sm font-semibold text-dark mb-2">{isDelivery ? "Wann soll geliefert werden?" : "Wann möchtest du abholen?"}</p>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => { setDeliveryTiming("asap"); setForm(f => ({ ...f, wunschzeit: "" })); }}
+                className={`flex flex-col items-center gap-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${
+                  deliveryTiming === "asap"
+                    ? "border-diavologreen bg-green-50 text-diavologreen"
+                    : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <span className="text-xl">⚡</span>
+                Schnellstmöglich
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeliveryTiming("scheduled")}
+                className={`flex flex-col items-center gap-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${
+                  deliveryTiming === "scheduled"
+                    ? "border-diavologreen bg-green-50 text-diavologreen"
+                    : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <span className="text-xl">🕐</span>
+                Wunschzeit
+              </button>
+            </div>
+            {deliveryTiming === "scheduled" && (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-dark mb-1">Datum</label>
+                  <input
+                    type="date"
+                    name="wunschzeit_date"
+                    value={form.wunschzeit.split("T")[0] || ""}
+                    onChange={(e) => {
+                      const time = form.wunschzeit.split("T")[1] || "12:00";
+                      setForm(f => ({ ...f, wunschzeit: `${e.target.value}T${time}` }));
+                    }}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-diavolored focus:ring-2 focus:ring-diavolored/10 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-dark mb-1">Uhrzeit</label>
+                  <input
+                    type="time"
+                    name="wunschzeit_time"
+                    value={form.wunschzeit.split("T")[1] || ""}
+                    onChange={(e) => {
+                      const date = form.wunschzeit.split("T")[0] || new Date().toISOString().split("T")[0];
+                      setForm(f => ({ ...f, wunschzeit: `${date}T${e.target.value}` }));
+                    }}
+                    min="11:30"
+                    max="21:00"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-diavolored focus:ring-2 focus:ring-diavolored/10 transition-all"
+                  />
+                </div>
+              </div>
+            )}
+            {deliveryTiming === "asap" && (
+              <p className="text-xs text-gray-400 mt-1">Voraussichtlich 30–50 Min.</p>
+            )}
           </div>
 
           {/* Anmerkungen */}
