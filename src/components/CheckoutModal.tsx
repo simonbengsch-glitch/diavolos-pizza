@@ -244,7 +244,7 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
           <div>
             <label className="block text-sm font-semibold text-dark mb-1">Anmerkungen (optional)</label>
             <textarea name="notes" value={form.notes} onChange={handleChange}
-              placeholder={isDelivery ? "z.B. 2. Etage, kein Aufzug, extra scharf..." : "z.B. Abholzeit, Sonderwünsche..."}
+              placeholder={isDelivery ? "z.B. 2. Etage, kein Aufzug..." : "z.B. Sonderwünsche..."}
               rows={2}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-diavolored focus:ring-2 focus:ring-diavolored/10 transition-all resize-none" />
           </div>
