@@ -656,36 +656,37 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
   };
 
   // Extras zu Bild-Layern — Family nutzt familySrc wenn vorhanden
-  const splitExtras = (extras: { id: string; name: string }[]) => {
-    const underImages: { src: string; inset: string }[] = [];
-    const overImages: { src: string; inset: string }[] = [];
+  type ImageLayer = { src: string; inset: string; half: "full" | "left" | "right" };
+
+  const buildImageLayers = (extras: { id: string; name: string }[], half: "full" | "left" | "right") => {
+    const underImages: ImageLayer[] = [];
+    const overImages: ImageLayer[] = [];
     extras.forEach(e => {
       const img = TOPPING_IMAGES[e.name];
       if (!img) return;
       const src = (isFamily && img.familySrc) ? img.familySrc : img.src;
-      // Family-Bilder: individuellen inset bestimmen
       const filename = src.split("/").pop()?.replace(".png", "") ?? "";
       const inset = isFamily
         ? (FAMILY_INSET_OVERRIDE[filename] ?? "14%")
         : "12%";
-      if (img.layer === "under_cheese") underImages.push({ src, inset });
-      else overImages.push({ src, inset });
+      if (img.layer === "under_cheese") underImages.push({ src, inset, half });
+      else overImages.push({ src, inset, half });
     });
     return { underImages, overImages };
   };
 
-  let underImageLayers: { src: string; inset: string }[] = [];
-  let overImageLayers: { src: string; inset: string }[] = [];
+  let underImageLayers: ImageLayer[] = [];
+  let overImageLayers: ImageLayer[] = [];
 
   if (halfHalf) {
-    const leftSplit  = splitExtras(halfHalf.left);
-    const rightSplit = splitExtras(halfHalf.right);
-    underImageLayers = [...leftSplit.underImages, ...rightSplit.underImages];
-    overImageLayers = [...leftSplit.overImages, ...rightSplit.overImages];
+    const leftLayers  = buildImageLayers(halfHalf.left, "left");
+    const rightLayers = buildImageLayers(halfHalf.right, "right");
+    underImageLayers = [...leftLayers.underImages, ...rightLayers.underImages];
+    overImageLayers = [...leftLayers.overImages, ...rightLayers.overImages];
   } else {
-    const split = splitExtras(selectedExtras);
-    underImageLayers = split.underImages;
-    overImageLayers = split.overImages;
+    const layers = buildImageLayers(selectedExtras, "full");
+    underImageLayers = layers.underImages;
+    overImageLayers = layers.overImages;
   }
 
   const isEmpty = halfHalf
@@ -713,8 +714,11 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 1: Under-Cheese Bild-Toppings */}
         {underImageLayers.map((item) => (
-          <div key={item.src} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "rounded-xl" : "rounded-full"}`}
-            style={{ inset: isFamily ? item.inset : "12%" }}>
+          <div key={`${item.src}-${item.half}`} className={`absolute z-[1] pointer-events-none overflow-hidden ${isFamily ? "rounded-xl" : "rounded-full"}`}
+            style={{
+              inset: isFamily ? item.inset : "12%",
+              clipPath: item.half === "left" ? "inset(0 50% 0 0)" : item.half === "right" ? "inset(0 0 0 50%)" : undefined,
+            }}>
             <Image
               src={item.src}
               alt="Topping"
@@ -741,8 +745,11 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
 
         {/* Layer 3: Over-Cheese Bild-Toppings */}
         {overImageLayers.map((item) => (
-          <div key={item.src} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "rounded-xl" : "rounded-full"}`}
-            style={{ inset: isFamily ? item.inset : "12%" }}>
+          <div key={`${item.src}-${item.half}`} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "rounded-xl" : "rounded-full"}`}
+            style={{
+              inset: isFamily ? item.inset : "12%",
+              clipPath: item.half === "left" ? "inset(0 50% 0 0)" : item.half === "right" ? "inset(0 0 0 50%)" : undefined,
+            }}>
             <Image
               src={item.src}
               alt="Topping"
