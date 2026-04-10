@@ -86,17 +86,54 @@ const OVER_CHEESE_TOPPINGS = new Set([
   "Gorgonzola", "Frischkäse", "Parmesan/Grana", "Ei",
 ]);
 
-// Family-Bilder die kleiner sind und weniger inset brauchen (in %)
-const FAMILY_INSET_OVERRIDE: Record<string, string> = {
-  "walnuesse":        "6%",
+// Family-Bilder: individueller Inset basierend auf Bildfüllung
+// Große Bilder (>90%) brauchen mehr Inset, kleine (<75%) weniger
+const FAMILY_INSET: Record<string, string> = {
+  // Sehr groß (>90% Füllung) → 16% inset
+  "artischocken":     "16%",
+  "auberginen":       "16%",
+  "basilikum-pesto":  "16%",
+  "broccoli":         "16%",
+  "champignons":      "16%",
+  "frischkaese":      "16%",
+  "hinterschinken":   "16%",
+  "kirschtomaten":    "16%",
+  "oliven":           "16%",
+  "parmaschinken":    "16%",
+  "salami-scharf":    "16%",
+  "schafskaese":      "16%",
+  "spinat":           "16%",
+  "thunfisch":        "16%",
+  "trueffel-pesto":   "16%",
+  "trueffel":         "16%",
+  "zucchini":         "16%",
+  // Mittel (82-90%) → 14% inset
+  "ananas":           "14%",
+  "bohnen":           "14%",
+  "garnelen":         "14%",
+  "gorgonzola":       "14%",
+  "hackfleisch":      "14%",
+  "kapern":           "14%",
+  "knoblauch":        "14%",
+  "mais":             "14%",
+  "meeresfruechte":   "14%",
+  "paprika":          "14%",
+  "parmesan":         "14%",
+  "peperoni-mild":    "14%",
+  "peperoni-scharf":  "14%",
+  "rucola":           "14%",
+  "salami":           "14%",
+  "sardellen":        "14%",
+  "speck":            "14%",
+  "spiegelei":        "14%",
+  "steinpilze":       "14%",
+  "zwiebeln":         "14%",
+  // Klein (75-82%) → 10% inset
+  "bueffelmozzarella":"10%",
+  "ei-gekocht":       "10%",
+  // Sehr klein (<75%) → 6% inset
   "lachs":            "6%",
-  "gorgonzola":       "8%",
-  "hackfleisch":      "8%",
-  "bueffelmozzarella":"8%",
-  "ei-gekocht":       "8%",
-  "parmesan":         "8%",
-  "mais":             "10%",
-  "knoblauch":        "10%",
+  "walnuesse":        "6%",
 };
 
 // Echte Bild-Layer für Toppings (rund + family)
@@ -667,7 +704,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
       const src = (isFamily && img.familySrc) ? img.familySrc : img.src;
       const filename = src.split("/").pop()?.replace(".png", "") ?? "";
       const inset = isFamily
-        ? (FAMILY_INSET_OVERRIDE[filename] ?? "14%")
+        ? (FAMILY_INSET[filename] ?? "14%")
         : "12%";
       if (img.layer === "under_cheese") underImages.push({ src, inset, half });
       else overImages.push({ src, inset, half });
