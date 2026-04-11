@@ -7,6 +7,15 @@ import PizzaVisual from "@/components/PizzaVisual";
 import CheckoutModal from "@/components/CheckoutModal";
 
 const SAUCES = ["Tomatensauce", "Ohne Sauce", "Pesto", "Frischkäse", "Trüffel-Pesto"];
+const SAUCE_PRICES: Record<string, number> = {
+  "Pesto": 1.50,
+  "Frischkäse": 1.00,
+  "Trüffel-Pesto": 2.00,
+};
+const CHEESES = ["Mozzarella", "Büffelmozzarella", "Ohne Käse"];
+const CHEESE_PRICES: Record<string, number> = {
+  "Büffelmozzarella": 2.00,
+};
 const BASE_PRICE = 10.99;
 const SERVICE_FEE = 0.99;
 const MIN_ORDER = 15.00;
@@ -156,7 +165,9 @@ export default function PizzaKonfiguratorPage() {
   }
 
   const sizeExtraPrice = selectedSize?.extra_price ?? 0;
-  const totalPrice = BASE_PRICE + sizeExtraPrice + extrasPrice;
+  const saucePrice = SAUCE_PRICES[selectedSauce] ?? 0;
+  const cheesePrice = CHEESE_PRICES[selectedCheese] ?? 0;
+  const totalPrice = BASE_PRICE + sizeExtraPrice + saucePrice + cheesePrice + extrasPrice;
 
   const buildName = () => {
     if (halfHalfMode) {
@@ -311,7 +322,9 @@ export default function PizzaKonfiguratorPage() {
                       {sauce === "Tomatensauce" ? "🍅" : sauce === "Pesto" ? "🌿" : sauce === "Trüffel-Pesto" ? "🍄" : sauce === "Frischkäse" ? "🧀" : "⬜"}
                     </span>
                     <span className="flex-1 text-left">{sauce}</span>
-                    {(sauce === "Tomatensauce" || sauce === "Ohne Sauce") && (
+                    {SAUCE_PRICES[sauce] ? (
+                      <span className="text-[10px] font-bold text-diavolored bg-diavolored/10 px-1.5 py-0.5 rounded">+{SAUCE_PRICES[sauce].toFixed(2).replace(".", ",")} €</span>
+                    ) : (
                       <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">0,00 €</span>
                     )}
                   </button>
@@ -326,7 +339,7 @@ export default function PizzaKonfiguratorPage() {
                 Käse
               </h2>
               <div className="grid grid-cols-2 gap-2">
-                {["Mozzarella", "Ohne Käse"].map((cheese) => (
+                {CHEESES.map((cheese) => (
                   <button
                     key={cheese}
                     onClick={() => setSelectedCheese(cheese)}
@@ -336,10 +349,12 @@ export default function PizzaKonfiguratorPage() {
                         : "border-gray-200 text-dark hover:border-gray-300"
                     }`}
                   >
-                    <span className="text-base">{cheese === "Mozzarella" ? "🧀" : "🚫"}</span>
+                    <span className="text-base">{cheese === "Ohne Käse" ? "🚫" : "🧀"}</span>
                     <span className="flex-1 text-left">{cheese}</span>
-                    {cheese === "Mozzarella" && (
-                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">inklusive</span>
+                    {CHEESE_PRICES[cheese] ? (
+                      <span className="text-[10px] font-bold text-diavolored bg-diavolored/10 px-1.5 py-0.5 rounded">+{CHEESE_PRICES[cheese].toFixed(2).replace(".", ",")} €</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">0,00 €</span>
                     )}
                   </button>
                 ))}
@@ -517,6 +532,18 @@ export default function PizzaKonfiguratorPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">{selectedSize?.label}</span>
                     <span>+{sizeExtraPrice.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                )}
+                {saucePrice > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{selectedSauce}</span>
+                    <span>+{saucePrice.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                )}
+                {cheesePrice > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{selectedCheese}</span>
+                    <span>+{cheesePrice.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}
                 {halfHalfMode ? (
