@@ -311,8 +311,8 @@ export default function PizzaKonfiguratorPage() {
                       {sauce === "Tomatensauce" ? "🍅" : sauce === "Pesto" ? "🌿" : sauce === "Trüffel-Pesto" ? "🍄" : sauce === "Frischkäse" ? "🧀" : "⬜"}
                     </span>
                     <span className="flex-1 text-left">{sauce}</span>
-                    {sauce === "Tomatensauce" && (
-                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">inklusive</span>
+                    {(sauce === "Tomatensauce" || sauce === "Ohne Sauce") && (
+                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">0,00 €</span>
                     )}
                   </button>
                 ))}
