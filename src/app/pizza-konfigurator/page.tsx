@@ -14,7 +14,7 @@ const SAUCE_PRICES: Record<string, number> = {
 };
 const CHEESES = ["Mozzarella", "Büffelmozzarella", "Ohne Käse"];
 const CHEESE_PRICES: Record<string, number> = {
-  "Büffelmozzarella": 2.00,
+  "Büffelmozzarella": 2.80,
 };
 const BASE_PRICE = 10.00;
 const SERVICE_FEE = 0;
