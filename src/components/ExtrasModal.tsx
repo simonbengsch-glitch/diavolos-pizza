@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Product, Extra, PizzaSize, SelectedExtra, CartItem } from "@/types";
+import { buildExtras, priceForExtraId } from "@/lib/extrasCatalog";
 
 interface Props {
   product: Product;
@@ -20,19 +21,27 @@ export default function ExtrasModal({ product, onClose, onAdd }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/pizza-sizes").then((r) => r.json()),
-      fetch("/api/extras").then((r) => r.json()),
-    ]).then(([sizeData, extraData]) => {
-      const sizeList: PizzaSize[] = sizeData.sizes || [];
+    fetch("/api/pizza-sizes").then((r) => r.json()).then((sizeData) => {
+      const sizeList: PizzaSize[] = (sizeData.sizes || []).map((s: PizzaSize) => ({
+        ...s,
+        label: s.label.replace("60×40", "40/60"),
+      }));
       setSizes(sizeList);
       setSelectedSize(sizeList[0] || null);
-      setExtras(extraData.extras || []);
       setLoading(false);
     });
   }, []);
 
   const isFamilySize = selectedSize?.label?.toLowerCase().includes("famili") ?? false;
+
+  useEffect(() => {
+    setExtras(buildExtras(isFamilySize));
+    const reprice = (list: SelectedExtra[]): SelectedExtra[] =>
+      list.map((e) => ({ ...e, price: priceForExtraId(e.id, isFamilySize) }));
+    setSelectedExtras(reprice);
+    setLeftExtras(reprice);
+    setRightExtras(reprice);
+  }, [isFamilySize]);
 
   // Wenn von Familienpizza auf Normal gewechselt: Halb-Halb zurücksetzen
   const handleSizeChange = (size: PizzaSize) => {
