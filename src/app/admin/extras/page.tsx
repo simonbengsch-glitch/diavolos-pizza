@@ -53,7 +53,7 @@ export default function AdminExtrasPage() {
       <header className="bg-dark text-white px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🧀</span>
-          <h1 className="font-heading font-bold text-xl">Extras / Beläge</h1>
+          <h1 className="font-heading font-bold text-xl">Beläge verwalten</h1>
         </div>
         <div className="flex items-center gap-3">
           <a href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">← Bestellungen</a>
@@ -68,10 +68,17 @@ export default function AdminExtrasPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 flex gap-3">
+          <span className="text-2xl">💡</span>
+          <div className="text-sm text-blue-900">
+            <p className="font-bold mb-1">So markierst du ausverkaufte Beläge:</p>
+            <p>Klicke auf den grünen <span className="font-bold">„✓ Vorrätig"</span>-Button, um einen Belag als <span className="font-bold">„✗ Ausverkauft"</span> zu markieren. Ausverkaufte Beläge verschwinden sofort aus dem Pizza-Konfigurator und allen Pizzen auf der Webseite — Kunden können sie nicht mehr auswählen. Wenn du wieder Ware hast, einfach nochmal klicken.</p>
+          </div>
+        </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
             <p className="text-sm text-gray-500">{extras.length} Beläge insgesamt</p>
-            <p className="text-xs text-gray-400">Klicke auf einen Belag zum Bearbeiten</p>
+            <p className="text-xs text-gray-400">Klicke „Bearbeiten" um Name/Preis zu ändern</p>
           </div>
           <div className="divide-y divide-gray-100">
             {extras.length === 0 ? (
@@ -80,7 +87,7 @@ export default function AdminExtrasPage() {
               <div key={extra.id} className={`flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors ${!extra.is_available ? "opacity-50" : ""}`}>
                 <div className="flex-1">
                   <span className="font-semibold text-dark">{extra.name}</span>
-                  {!extra.is_available && <span className="ml-2 text-xs text-red-500 font-medium">inaktiv</span>}
+                  {!extra.is_available && <span className="ml-2 text-xs text-red-500 font-medium">ausverkauft</span>}
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="font-bold text-diavologreen w-16 text-right">
@@ -88,9 +95,10 @@ export default function AdminExtrasPage() {
                   </span>
                   <button
                     onClick={() => handleToggle(extra)}
+                    title={extra.is_available ? "Klicken um als ausverkauft zu markieren" : "Klicken um wieder verfügbar zu machen"}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${extra.is_available ? "bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700" : "bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-700"}`}
                   >
-                    {extra.is_available ? "Aktiv" : "Inaktiv"}
+                    {extra.is_available ? "✓ Vorrätig" : "✗ Ausverkauft"}
                   </button>
                   <button
                     onClick={() => { setIsNew(false); setEditExtra({ ...extra }); }}

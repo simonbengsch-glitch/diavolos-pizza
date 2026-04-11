@@ -664,7 +664,7 @@ interface Props {
 
 export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfHalf }: Props) {
   const isFamily = size.toLowerCase().includes("famili");
-  const hasCheese = true; // Mozzarella ist immer Standard
+  const hasCheese = cheese !== "Ohne Käse";
 
   // Immer Sauce-Bild als Basis verwenden (Käse-Bilder haben Artefakte)
   const sauceMap = isFamily ? FAMILY_SAUCE_IMAGES : SAUCE_IMAGES;

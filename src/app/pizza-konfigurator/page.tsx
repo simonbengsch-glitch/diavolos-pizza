@@ -310,7 +310,37 @@ export default function PizzaKonfiguratorPage() {
                     <span className="text-base">
                       {sauce === "Tomatensauce" ? "🍅" : sauce === "Pesto" ? "🌿" : sauce === "Trüffel-Pesto" ? "🍄" : sauce === "Frischkäse" ? "🧀" : "⬜"}
                     </span>
-                    {sauce}
+                    <span className="flex-1 text-left">{sauce}</span>
+                    {sauce === "Tomatensauce" && (
+                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">inklusive</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Käse */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <h2 className="font-heading font-bold text-lg text-dark mb-3 flex items-center gap-2">
+                <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
+                Käse
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {["Mozzarella", "Ohne Käse"].map((cheese) => (
+                  <button
+                    key={cheese}
+                    onClick={() => setSelectedCheese(cheese)}
+                    className={`p-3 rounded-xl border-2 text-sm font-semibold transition-all flex items-center gap-2 ${
+                      selectedCheese === cheese
+                        ? "border-diavolored bg-diavolored/5 text-diavolored"
+                        : "border-gray-200 text-dark hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-base">{cheese === "Mozzarella" ? "🧀" : "🚫"}</span>
+                    <span className="flex-1 text-left">{cheese}</span>
+                    {cheese === "Mozzarella" && (
+                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">inklusive</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -339,7 +369,7 @@ export default function PizzaKonfiguratorPage() {
             {/* Beläge */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
               <h2 className="font-heading font-bold text-lg text-dark mb-1 flex items-center gap-2">
-                <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
+                <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">4</span>
                 Beläge
                 {!halfHalfMode && selectedExtras.length > 0 && (
                   <span className="ml-auto bg-diavolored text-white text-xs font-bold px-2 py-0.5 rounded-full">

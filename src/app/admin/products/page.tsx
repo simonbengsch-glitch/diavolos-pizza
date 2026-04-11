@@ -90,12 +90,13 @@ export default function AdminProductsPage() {
       <header className="bg-dark text-white px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🌶️</span>
-          <h1 className="font-heading font-bold text-xl">Produkt-Verwaltung</h1>
+          <h1 className="font-heading font-bold text-xl">Speisekarte & Preise</h1>
         </div>
         <div className="flex gap-3">
           <a href="/admin/dashboard" className="text-gray-300 hover:text-white text-sm">← Bestellungen</a>
           <button
             onClick={() => setPriceModal(true)}
+            title="Mehrere Preise auf einmal anpassen (nach Kategorie)"
             className="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-600 transition-colors"
           >
             💰 Preise anpassen
@@ -110,6 +111,18 @@ export default function AdminProductsPage() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Info-Hinweis */}
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex gap-3">
+          <span className="text-2xl">💡</span>
+          <div className="text-sm text-blue-900">
+            <p className="font-bold mb-1">Was kannst du hier tun?</p>
+            <ul className="space-y-0.5 list-disc list-inside">
+              <li><span className="font-bold">Einzelnen Preis ändern:</span> Klicke bei einem Produkt auf „Bearbeiten" und ändere den Preis.</li>
+              <li><span className="font-bold">Mehrere Preise gleichzeitig:</span> Nutze oben „💰 Preise anpassen" (z.B. alle Pizzen um +0,50 €).</li>
+              <li><span className="font-bold">Produkt ausverkauft:</span> Klicke auf den grünen „✓ Verfügbar"-Button — das Produkt verschwindet dann für Kunden von der Webseite.</li>
+            </ul>
+          </div>
+        </div>
         {/* Kategorie Filter */}
         <div className="flex gap-2 flex-wrap mb-6">
           {CATEGORIES.map((cat) => (
@@ -136,8 +149,9 @@ export default function AdminProductsPage() {
               <div className="flex items-center gap-3 shrink-0">
                 <span className="font-bold text-diavologreen">{Number(product.base_price).toFixed(2).replace(".", ",")} €</span>
                 <button onClick={() => handleToggleAvailable(product)}
+                  title={product.is_available ? "Klicken um als ausverkauft zu markieren" : "Klicken um wieder verfügbar zu machen"}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${product.is_available ? "bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700" : "bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-700"}`}>
-                  {product.is_available ? "Aktiv" : "Inaktiv"}
+                  {product.is_available ? "✓ Verfügbar" : "✗ Ausverkauft"}
                 </button>
                 <button onClick={() => { setIsNew(false); setEditProduct({ ...product }); }}
                   className="bg-gray-100 hover:bg-gray-200 text-dark px-3 py-1 rounded-lg text-xs font-bold transition-colors">

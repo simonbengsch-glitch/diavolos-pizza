@@ -249,9 +249,9 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-gray-400">Umsatz heute</p>
             <p className="font-bold text-diavologreen text-lg">{todayRevenue.toFixed(2).replace(".", ",")} €</p>
           </div>
-          <a href="/admin/products" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors">🍕 Produkte</a>
-          <a href="/admin/extras" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors">🧀 Extras</a>
-          <a href="/admin/sizes" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors">📏 Größen</a>
+          <a href="/admin/products" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors" title="Speisekarte bearbeiten & Preise anpassen">🍕 Speisekarte & Preise</a>
+          <a href="/admin/extras" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors" title="Beläge verwalten & als ausverkauft markieren">🧀 Beläge</a>
+          <a href="/admin/sizes" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors" title="Pizzagrößen & Aufpreise">📏 Größen</a>
           <a href="/admin/mitarbeiter" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors">👤 Mitarbeiter</a>
           <button onClick={fetchOrders} className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors" title="Aktualisieren">🔄</button>
           <button onClick={logout} className="bg-diavolored hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">Abmelden</button>
