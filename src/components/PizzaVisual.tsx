@@ -106,7 +106,7 @@ const FAMILY_INSET: Record<string, string> = {
   "salami-scharf":    "12%",
   "schafskaese":      "12%",
   "spinat":           "6%",
-  "thunfisch":        "16%",
+  "thunfisch":        "20%",
   "trueffel-pesto":   "12%",
   "trueffel":         "12%",
   "zucchini":         "12%",
