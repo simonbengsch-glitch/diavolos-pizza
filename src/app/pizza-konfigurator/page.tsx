@@ -322,11 +322,9 @@ export default function PizzaKonfiguratorPage() {
                       {sauce === "Tomatensauce" ? "🍅" : sauce === "Pesto" ? "🌿" : sauce === "Trüffel-Pesto" ? "🍄" : sauce === "Frischkäse" ? "🧀" : "⬜"}
                     </span>
                     <span className="flex-1 text-left">{sauce}</span>
-                    {SAUCE_PRICES[sauce] ? (
-                      <span className="text-[10px] font-bold text-diavolored bg-diavolored/10 px-1.5 py-0.5 rounded">+{SAUCE_PRICES[sauce].toFixed(2).replace(".", ",")} €</span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">0,00 €</span>
-                    )}
+                    <span className="text-xs text-gray-500">
+                      {SAUCE_PRICES[sauce] ? `+${SAUCE_PRICES[sauce].toFixed(2).replace(".", ",")} €` : "0,00 €"}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -351,11 +349,9 @@ export default function PizzaKonfiguratorPage() {
                   >
                     <span className="text-base">{cheese === "Ohne Käse" ? "🚫" : "🧀"}</span>
                     <span className="flex-1 text-left">{cheese}</span>
-                    {CHEESE_PRICES[cheese] ? (
-                      <span className="text-[10px] font-bold text-diavolored bg-diavolored/10 px-1.5 py-0.5 rounded">+{CHEESE_PRICES[cheese].toFixed(2).replace(".", ",")} €</span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-diavologreen bg-diavologreen/10 px-1.5 py-0.5 rounded">0,00 €</span>
-                    )}
+                    <span className="text-xs text-gray-500">
+                      {CHEESE_PRICES[cheese] ? `+${CHEESE_PRICES[cheese].toFixed(2).replace(".", ",")} €` : "0,00 €"}
+                    </span>
                   </button>
                 ))}
               </div>

@@ -783,6 +783,19 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
           </div>
         )}
 
+        {/* Layer 2b: Büffelmozzarella-Bällchen über Käse */}
+        {cheese === "Büffelmozzarella" && (
+          <div className={`absolute z-[2] pointer-events-none overflow-hidden ${isFamily ? "inset-[10%] rounded-xl" : "inset-[12%] rounded-full"}`}>
+            <Image
+              src={isFamily ? "/pizza/toppings/family/bueffelmozzarella.png" : "/pizza/toppings/bueffelmozzarella.png"}
+              alt="Büffelmozzarella"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 384px"
+            />
+          </div>
+        )}
+
         {/* Layer 3: Over-Cheese Bild-Toppings */}
         {overImageLayers.map((item) => (
           <div key={`${item.src}-${item.half}`} className={`absolute z-[3] pointer-events-none overflow-hidden ${isFamily ? "rounded-xl" : "rounded-full"}`}
