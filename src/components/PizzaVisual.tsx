@@ -740,7 +740,7 @@ export default function PizzaVisual({ sauce, cheese, selectedExtras, size, halfH
       </div>
 
       <div
-        className={`relative transition-all duration-500 ${isFamily ? "aspect-video" : "aspect-square"} ${isFamily ? "rounded-2xl" : "rounded-full"} overflow-hidden`}
+        className={`relative transition-all duration-500 ${isFamily ? "aspect-[60/40]" : "aspect-square"} ${isFamily ? "rounded-2xl" : "rounded-full"} overflow-hidden`}
         style={{ width: `${maxPct}%`, filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.30))" }}
       >
         <Image

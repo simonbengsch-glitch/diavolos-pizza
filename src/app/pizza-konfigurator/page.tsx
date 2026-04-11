@@ -20,24 +20,66 @@ const BASE_PRICE = 10.99;
 const SERVICE_FEE = 0.99;
 const MIN_ORDER = 15.00;
 
-// Extras-Multiplikator je nach Größe
-const SIZE_MULTIPLIER: Record<string, number> = {
-  "30": 1,
-  "35": 1.3,
-  "40": 1.3,
-  "45": 1.6,
-  "50": 2,
-  "family": 2,
-};
+// Extras-Katalog mit getrennten Preisen für Normal- und Familienpizza (Betreiber-Preisliste)
+const EXTRAS_CATALOG: Array<{ id: string; name: string; priceRegular: number; priceFamily: number }> = [
+  { id: "ananas",            name: "Ananas",             priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "artischocken",      name: "Artischocken",       priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "auberginen",        name: "Auberginen",         priceRegular: 1.80, priceFamily: 2.30 },
+  { id: "basilikum-pesto",   name: "Basilikum-Pesto",    priceRegular: 2.00, priceFamily: 2.50 },
+  { id: "bohnen",            name: "Bohnen",             priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "broccoli",          name: "Broccoli",           priceRegular: 1.80, priceFamily: 2.30 },
+  { id: "bueffelmozzarella", name: "Büffelmozzarella",   priceRegular: 2.80, priceFamily: 3.50 },
+  { id: "champignons",       name: "Champignons",        priceRegular: 1.50, priceFamily: 2.30 },
+  { id: "ei-gekocht",        name: "Ei, gekocht",        priceRegular: 1.50, priceFamily: 2.00 },
+  { id: "frischkaese",       name: "Frischkäse",         priceRegular: 1.50, priceFamily: 2.00 },
+  { id: "garnelen",          name: "Garnelen",           priceRegular: 2.80, priceFamily: 3.50 },
+  { id: "gorgonzola",        name: "Gorgonzola",         priceRegular: 2.30, priceFamily: 2.80 },
+  { id: "hackfleisch",       name: "Hackfleisch",        priceRegular: 2.30, priceFamily: 3.00 },
+  { id: "hinterschinken",    name: "Hinterschinken",     priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "kapern",            name: "Kapern",             priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "kaese-vegan",       name: "Käse, vegan",        priceRegular: 2.50, priceFamily: 3.00 },
+  { id: "kirschtomaten",     name: "Kirschtomaten",      priceRegular: 1.50, priceFamily: 2.00 },
+  { id: "knoblauch",         name: "Knoblauch",          priceRegular: 1.30, priceFamily: 1.80 },
+  { id: "lachs",             name: "Lachs",              priceRegular: 2.80, priceFamily: 3.50 },
+  { id: "mais",              name: "Mais",               priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "meeresfruechten",   name: "Meeresfrüchten",     priceRegular: 2.80, priceFamily: 3.50 },
+  { id: "mozzarella",        name: "Mozzarella",         priceRegular: 2.00, priceFamily: 3.00 },
+  { id: "oliven",            name: "Oliven",             priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "paprika",           name: "Paprika",            priceRegular: 1.50, priceFamily: 2.00 },
+  { id: "parmaschinken",     name: "Parmaschinken",      priceRegular: 2.80, priceFamily: 3.50 },
+  { id: "parmesan",          name: "Parmesan",           priceRegular: 1.80, priceFamily: 2.30 },
+  { id: "peperoni-mild",     name: "Peperoni, mild",     priceRegular: 1.50, priceFamily: 2.00 },
+  { id: "peperoni-scharf",   name: "Peperoni, scharf",   priceRegular: 1.50, priceFamily: 2.00 },
+  { id: "rucola",            name: "Rucola",             priceRegular: 2.00, priceFamily: 2.50 },
+  { id: "salami",            name: "Salami",             priceRegular: 1.50, priceFamily: 2.50 },
+  { id: "salami-scharf",     name: "Salami, scharf",     priceRegular: 2.50, priceFamily: 3.50 },
+  { id: "sardellen",         name: "Sardellen",          priceRegular: 2.50, priceFamily: 3.30 },
+  { id: "schafskaese",       name: "Schafskäse",         priceRegular: 1.50, priceFamily: 2.30 },
+  { id: "speck",             name: "Speck",              priceRegular: 2.50, priceFamily: 3.50 },
+  { id: "spiegelei",         name: "Spiegelei",          priceRegular: 1.50, priceFamily: 2.00 },
+  { id: "spinat",            name: "Spinat",             priceRegular: 2.30, priceFamily: 3.30 },
+  { id: "steinpilzen",       name: "Steinpilzen",        priceRegular: 2.50, priceFamily: 3.50 },
+  { id: "thunfisch",         name: "Thunfisch",          priceRegular: 2.50, priceFamily: 3.30 },
+  { id: "trueffel-pesto",    name: "Trüffel-Pesto",      priceRegular: 2.80, priceFamily: 3.50 },
+  { id: "walnuessen",        name: "Walnüssen",          priceRegular: 2.00, priceFamily: 2.50 },
+  { id: "zucchini",          name: "Zucchini",           priceRegular: 1.80, priceFamily: 2.30 },
+  { id: "zwiebeln",          name: "Zwiebeln",           priceRegular: 1.50, priceFamily: 2.30 },
+];
 
-function getMultiplier(label: string): number {
-  if (label.toLowerCase().includes("famili")) return SIZE_MULTIPLIER["family"];
-  const match = label.match(/(\d+)\s*cm/i);
-  if (match) {
-    const cm = match[1];
-    return SIZE_MULTIPLIER[cm] ?? 1;
-  }
-  return 1;
+function buildExtras(isFamily: boolean): Extra[] {
+  return EXTRAS_CATALOG.map((e, i) => ({
+    id: e.id,
+    name: e.name,
+    price: isFamily ? e.priceFamily : e.priceRegular,
+    is_available: true,
+    sort_order: i + 1,
+  }));
+}
+
+function priceForExtraId(id: string, isFamily: boolean): number {
+  const entry = EXTRAS_CATALOG.find((e) => e.id === id);
+  if (!entry) return 0;
+  return isFamily ? entry.priceFamily : entry.priceRegular;
 }
 
 export default function PizzaKonfiguratorPage() {
@@ -106,18 +148,23 @@ export default function PizzaKonfiguratorPage() {
   };
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/pizza-sizes").then((r) => r.json()),
-      fetch("/api/extras").then((r) => r.json()),
-    ]).then(([sizeData, extraData]) => {
+    fetch("/api/pizza-sizes").then((r) => r.json()).then((sizeData) => {
       const sizeList = sizeData.sizes || [];
       setSizes(sizeList);
       setSelectedSize(sizeList[0] || null);
-      setExtras(extraData.extras || []);
     });
   }, []);
 
   const isFamilySize = selectedSize?.label?.toLowerCase().includes("famili") ?? false;
+
+  useEffect(() => {
+    setExtras(buildExtras(isFamilySize));
+    const reprice = (list: Extra[]) =>
+      list.map((e) => ({ ...e, price: priceForExtraId(e.id, isFamilySize) }));
+    setSelectedExtras(reprice);
+    setLeftExtras(reprice);
+    setRightExtras(reprice);
+  }, [isFamilySize]);
 
   const handleSizeChange = (size: PizzaSize) => {
     setSelectedSize(size);
@@ -150,11 +197,9 @@ export default function PizzaKonfiguratorPage() {
     ? [...leftExtras, ...rightExtras.filter((re) => !leftExtras.some((le) => le.id === re.id))]
     : selectedExtras;
 
-  const multiplier = getMultiplier(selectedSize?.label ?? "30 cm");
-
   // Extras-Preis: Bei Halb-Halb zahlt man pro Hälfte 50%, auf beiden Hälften = 100%
   const calcExtraPrice = (extra: Extra, isHalf: boolean) =>
-    Math.round(extra.price * multiplier * (isHalf ? 0.5 : 1) * 100) / 100;
+    Math.round(extra.price * (isHalf ? 0.5 : 1) * 100) / 100;
 
   let extrasPrice = 0;
   if (halfHalfMode) {
@@ -564,9 +609,6 @@ export default function PizzaKonfiguratorPage() {
                       <span>+{calcExtraPrice(e, false).toFixed(2).replace(".", ",")} €</span>
                     </div>
                   ))
-                )}
-                {multiplier > 1 && (
-                  <p className="text-xs text-gray-400 italic">Belag-Aufpreis ×{multiplier} für {selectedSize?.label}</p>
                 )}
                 <div className="flex justify-between text-sm text-gray-400">
                   <span>Servicegebühr</span>
