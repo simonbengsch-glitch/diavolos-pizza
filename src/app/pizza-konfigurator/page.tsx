@@ -16,9 +16,20 @@ const CHEESES = ["Mozzarella", "Büffelmozzarella", "Ohne Käse"];
 const CHEESE_PRICES: Record<string, number> = {
   "Büffelmozzarella": 2.00,
 };
-const BASE_PRICE = 10.99;
-const SERVICE_FEE = 0.99;
+const BASE_PRICE = 10.00;
+const SERVICE_FEE = 0;
 const MIN_ORDER = 15.00;
+
+// Gewünschte Gesamtpreise je Größe (Betreiber-Preisliste)
+// → ergeben sich als BASE_PRICE + size.extra_price
+const SIZE_TOTAL_OVERRIDE: Array<{ match: RegExp; total: number }> = [
+  { match: /famili/i,       total: 25.00 },
+  { match: /30\s*cm/i,      total: 10.00 },
+  { match: /35\s*cm/i,      total: 14.00 },
+  { match: /40\s*cm/i,      total: 16.00 },
+  { match: /45\s*cm/i,      total: 18.00 },
+  { match: /50\s*cm/i,      total: 20.00 },
+];
 
 // Extras-Katalog mit getrennten Preisen für Normal- und Familienpizza (Betreiber-Preisliste)
 const EXTRAS_CATALOG: Array<{ id: string; name: string; priceRegular: number; priceFamily: number }> = [
@@ -149,7 +160,14 @@ export default function PizzaKonfiguratorPage() {
 
   useEffect(() => {
     fetch("/api/pizza-sizes").then((r) => r.json()).then((sizeData) => {
-      const sizeList = sizeData.sizes || [];
+      const sizeList: PizzaSize[] = (sizeData.sizes || []).map((s: PizzaSize) => {
+        const override = SIZE_TOTAL_OVERRIDE.find((o) => o.match.test(s.label));
+        return {
+          ...s,
+          label: s.label.replace("60×40", "40/60"),
+          extra_price: override ? Math.round((override.total - BASE_PRICE) * 100) / 100 : s.extra_price,
+        };
+      });
       setSizes(sizeList);
       setSelectedSize(sizeList[0] || null);
     });
@@ -610,10 +628,12 @@ export default function PizzaKonfiguratorPage() {
                     </div>
                   ))
                 )}
-                <div className="flex justify-between text-sm text-gray-400">
-                  <span>Servicegebühr</span>
-                  <span>+{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
-                </div>
+                {SERVICE_FEE > 0 && (
+                  <div className="flex justify-between text-sm text-gray-400">
+                    <span>Servicegebühr</span>
+                    <span>+{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-xl mb-4">
@@ -683,10 +703,12 @@ export default function PizzaKonfiguratorPage() {
             </div>
             {missing > 0 && <p className="text-xs text-diavolored mt-1">Noch {missing.toFixed(2).replace(".", ",")} € bis zum Mindestbestellwert</p>}
           </div>
-          <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Servicegebühr</span>
-            <span>{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
-          </div>
+          {SERVICE_FEE > 0 && (
+            <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <span>Servicegebühr</span>
+              <span>{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
+            </div>
+          )}
           <div className="flex justify-between items-center mb-5">
             <span className="font-bold text-lg text-dark">Gesamtsumme:</span>
             <span className="font-bold text-2xl text-dark">{cartTotal.toFixed(2).replace(".", ",")} €</span>
