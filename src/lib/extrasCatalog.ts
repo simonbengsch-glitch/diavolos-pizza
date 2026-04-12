@@ -3,73 +3,79 @@ import { Extra } from "@/types";
 type CatalogEntry = {
   id: string;
   name: string;
-  price30: number;
-  priceRegular: number;
-  priceFamily: number;
+  p30: number;
+  p35: number;
+  p40: number;
+  p45: number;
+  p50: number;
+  pFam: number;
 };
 
-export type SizeCategory = "30" | "regular" | "family";
+export type SizeCategory = "30" | "35" | "40" | "45" | "50" | "family";
 
 export function getSizeCategory(label: string): SizeCategory {
   if (label.toLowerCase().includes("famili")) return "family";
   const match = label.match(/(\d+)\s*cm/i);
-  if (match && match[1] === "30") return "30";
-  return "regular";
+  if (match) {
+    const cm = match[1] as SizeCategory;
+    if (["30", "35", "40", "45", "50"].includes(cm)) return cm;
+  }
+  return "30";
 }
 
-// Betreiber-Preisliste:
-// price30     = ø 30 cm
-// priceRegular = ø 35–50 cm
-// priceFamily  = Familienpizza 40/60 cm
+// Betreiber-Preisliste je Größe
 export const EXTRAS_CATALOG: CatalogEntry[] = [
-  { id: "ananas",            name: "Ananas",           price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "artischocken",      name: "Artischocken",     price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "auberginen",        name: "Auberginen",       price30: 1.00, priceRegular: 1.80, priceFamily: 2.30 },
-  { id: "basilikum-pesto",   name: "Basilikum-Pesto",  price30: 1.00, priceRegular: 2.00, priceFamily: 2.50 },
-  { id: "bohnen",            name: "Bohnen",           price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "broccoli",          name: "Broccoli",         price30: 1.00, priceRegular: 1.80, priceFamily: 2.30 },
-  { id: "bueffelmozzarella", name: "Büffelmozzarella", price30: 1.50, priceRegular: 2.80, priceFamily: 3.50 },
-  { id: "champignons",       name: "Champignons",      price30: 0.50, priceRegular: 1.50, priceFamily: 2.30 },
-  { id: "ei-gekocht",        name: "Ei, gekocht",      price30: 0.50, priceRegular: 1.50, priceFamily: 2.00 },
-  { id: "frischkaese",       name: "Frischkäse",       price30: 0.50, priceRegular: 1.50, priceFamily: 2.00 },
-  { id: "garnelen",          name: "Garnelen",         price30: 2.00, priceRegular: 2.80, priceFamily: 3.50 },
-  { id: "gorgonzola",        name: "Gorgonzola",       price30: 1.50, priceRegular: 2.30, priceFamily: 2.80 },
-  { id: "hackfleisch",       name: "Hackfleisch",      price30: 1.50, priceRegular: 2.30, priceFamily: 3.00 },
-  { id: "hinterschinken",    name: "Hinterschinken",   price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "kapern",            name: "Kapern",           price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "kaese-vegan",       name: "Käse, vegan",      price30: 1.00, priceRegular: 2.50, priceFamily: 3.00 },
-  { id: "kirschtomaten",     name: "Kirschtomaten",    price30: 0.50, priceRegular: 1.50, priceFamily: 2.00 },
-  { id: "knoblauch",         name: "Knoblauch",        price30: 0.50, priceRegular: 1.30, priceFamily: 1.80 },
-  { id: "lachs",             name: "Lachs",            price30: 2.00, priceRegular: 2.80, priceFamily: 3.50 },
-  { id: "mais",              name: "Mais",             price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "meeresfruechten",   name: "Meeresfrüchten",   price30: 2.00, priceRegular: 2.80, priceFamily: 3.50 },
-  { id: "mozzarella",        name: "Mozzarella",       price30: 1.00, priceRegular: 2.00, priceFamily: 3.00 },
-  { id: "oliven",            name: "Oliven",           price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "paprika",           name: "Paprika",          price30: 0.50, priceRegular: 1.50, priceFamily: 2.00 },
-  { id: "parmaschinken",     name: "Parmaschinken",    price30: 2.00, priceRegular: 2.80, priceFamily: 3.50 },
-  { id: "parmesan",          name: "Parmesan",         price30: 1.00, priceRegular: 1.80, priceFamily: 2.30 },
-  { id: "peperoni-mild",     name: "Peperoni, mild",   price30: 0.50, priceRegular: 1.50, priceFamily: 2.00 },
-  { id: "peperoni-scharf",   name: "Peperoni, scharf", price30: 0.50, priceRegular: 1.50, priceFamily: 2.00 },
-  { id: "rucola",            name: "Rucola",           price30: 0.50, priceRegular: 2.00, priceFamily: 2.50 },
-  { id: "salami",            name: "Salami",           price30: 0.50, priceRegular: 1.50, priceFamily: 2.50 },
-  { id: "salami-scharf",     name: "Salami, scharf",   price30: 1.50, priceRegular: 2.50, priceFamily: 3.50 },
-  { id: "sardellen",         name: "Sardellen",        price30: 1.50, priceRegular: 2.50, priceFamily: 3.30 },
-  { id: "schafskaese",       name: "Schafskäse",       price30: 0.50, priceRegular: 1.50, priceFamily: 2.30 },
-  { id: "speck",             name: "Speck",            price30: 1.50, priceRegular: 2.50, priceFamily: 3.50 },
-  { id: "spiegelei",         name: "Spiegelei",        price30: 0.50, priceRegular: 1.50, priceFamily: 2.00 },
-  { id: "spinat",            name: "Spinat",           price30: 1.00, priceRegular: 2.30, priceFamily: 3.30 },
-  { id: "steinpilzen",       name: "Steinpilzen",      price30: 1.50, priceRegular: 2.50, priceFamily: 3.50 },
-  { id: "thunfisch",         name: "Thunfisch",        price30: 1.50, priceRegular: 2.50, priceFamily: 3.30 },
-  { id: "trueffel-pesto",    name: "Trüffel-Pesto",    price30: 2.00, priceRegular: 2.80, priceFamily: 3.50 },
-  { id: "walnuessen",        name: "Walnüssen",        price30: 1.00, priceRegular: 2.00, priceFamily: 2.50 },
-  { id: "zucchini",          name: "Zucchini",         price30: 1.00, priceRegular: 1.80, priceFamily: 2.30 },
-  { id: "zwiebeln",          name: "Zwiebeln",         price30: 0.50, priceRegular: 1.50, priceFamily: 2.30 },
+  //                                                   30    35    40    45    50    Fam
+  { id: "ananas",            name: "Ananas",           p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "artischocken",      name: "Artischocken",     p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "auberginen",        name: "Auberginen",       p30: 1.00, p35: 1.30, p40: 1.50, p45: 1.80, p50: 2.00, pFam: 2.30 },
+  { id: "basilikum-pesto",   name: "Basilikum-Pesto",  p30: 1.00, p35: 1.30, p40: 1.50, p45: 2.00, p50: 2.30, pFam: 2.50 },
+  { id: "bohnen",            name: "Bohnen",           p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "broccoli",          name: "Broccoli",         p30: 1.00, p35: 1.30, p40: 1.50, p45: 1.80, p50: 2.00, pFam: 2.30 },
+  { id: "bueffelmozzarella", name: "Büffelmozzarella", p30: 1.50, p35: 2.00, p40: 2.50, p45: 2.80, p50: 3.00, pFam: 3.50 },
+  { id: "champignons",       name: "Champignons",      p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.30 },
+  { id: "ei-gekocht",        name: "Ei, gekocht",      p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.00 },
+  { id: "frischkaese",       name: "Frischkäse",       p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.00 },
+  { id: "garnelen",          name: "Garnelen",         p30: 2.00, p35: 2.30, p40: 2.50, p45: 2.80, p50: 3.00, pFam: 3.50 },
+  { id: "gorgonzola",        name: "Gorgonzola",       p30: 1.50, p35: 1.80, p40: 2.00, p45: 2.30, p50: 2.50, pFam: 2.80 },
+  { id: "hackfleisch",       name: "Hackfleisch",      p30: 1.50, p35: 1.80, p40: 2.00, p45: 2.30, p50: 2.50, pFam: 3.00 },
+  { id: "hinterschinken",    name: "Hinterschinken",   p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "kapern",            name: "Kapern",           p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "kaese-vegan",       name: "Käse, vegan",      p30: 1.00, p35: 1.50, p40: 2.00, p45: 2.50, p50: 2.80, pFam: 3.00 },
+  { id: "kirschtomaten",     name: "Kirschtomaten",    p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.00 },
+  { id: "knoblauch",         name: "Knoblauch",        p30: 0.50, p35: 0.70, p40: 1.30, p45: 1.30, p50: 1.50, pFam: 1.80 },
+  { id: "lachs",             name: "Lachs",            p30: 2.00, p35: 2.30, p40: 2.50, p45: 2.80, p50: 3.00, pFam: 3.50 },
+  { id: "mais",              name: "Mais",             p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "meeresfruechten",   name: "Meeresfrüchten",   p30: 2.00, p35: 2.30, p40: 2.50, p45: 2.80, p50: 3.00, pFam: 3.50 },
+  { id: "mozzarella",        name: "Mozzarella",       p30: 1.00, p35: 1.50, p40: 2.00, p45: 2.00, p50: 2.80, pFam: 3.00 },
+  { id: "oliven",            name: "Oliven",           p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "paprika",           name: "Paprika",          p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.00 },
+  { id: "parmaschinken",     name: "Parmaschinken",    p30: 2.00, p35: 2.30, p40: 2.50, p45: 2.80, p50: 3.00, pFam: 3.50 },
+  { id: "parmesan",          name: "Parmesan",         p30: 1.00, p35: 1.30, p40: 1.50, p45: 1.80, p50: 2.00, pFam: 2.30 },
+  { id: "peperoni-mild",     name: "Peperoni, mild",   p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.00 },
+  { id: "peperoni-scharf",   name: "Peperoni, scharf", p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.00 },
+  { id: "rucola",            name: "Rucola",           p30: 0.50, p35: 1.50, p40: 1.80, p45: 2.00, p50: 2.30, pFam: 2.50 },
+  { id: "salami",            name: "Salami",           p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 2.00, pFam: 2.50 },
+  { id: "salami-scharf",     name: "Salami, scharf",   p30: 1.50, p35: 2.00, p40: 2.30, p45: 2.50, p50: 2.80, pFam: 3.50 },
+  { id: "sardellen",         name: "Sardellen",        p30: 1.50, p35: 2.00, p40: 2.30, p45: 2.50, p50: 2.80, pFam: 3.30 },
+  { id: "schafskaese",       name: "Schafskäse",       p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.30 },
+  { id: "speck",             name: "Speck",            p30: 1.50, p35: 2.00, p40: 2.30, p45: 2.50, p50: 3.00, pFam: 3.50 },
+  { id: "spiegelei",         name: "Spiegelei",        p30: 0.50, p35: 1.00, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.00 },
+  { id: "spinat",            name: "Spinat",           p30: 1.00, p35: 1.30, p40: 1.30, p45: 2.30, p50: 2.80, pFam: 3.30 },
+  { id: "steinpilzen",       name: "Steinpilzen",      p30: 1.50, p35: 2.00, p40: 2.30, p45: 2.50, p50: 3.00, pFam: 3.50 },
+  { id: "thunfisch",         name: "Thunfisch",        p30: 1.50, p35: 2.00, p40: 2.30, p45: 2.50, p50: 2.80, pFam: 3.30 },
+  { id: "trueffel-pesto",    name: "Trüffel-Pesto",    p30: 2.00, p35: 2.30, p40: 2.50, p45: 2.80, p50: 3.00, pFam: 3.50 },
+  { id: "walnuessen",        name: "Walnüssen",        p30: 1.00, p35: 1.50, p40: 1.80, p45: 2.00, p50: 2.30, pFam: 2.50 },
+  { id: "zucchini",          name: "Zucchini",         p30: 1.00, p35: 1.30, p40: 1.50, p45: 1.80, p50: 2.00, pFam: 2.30 },
+  { id: "zwiebeln",          name: "Zwiebeln",         p30: 0.50, p35: 0.80, p40: 1.30, p45: 1.50, p50: 1.80, pFam: 2.30 },
 ];
 
 function priceOf(entry: CatalogEntry, cat: SizeCategory): number {
-  if (cat === "30") return entry.price30;
-  if (cat === "family") return entry.priceFamily;
-  return entry.priceRegular;
+  const map: Record<SizeCategory, number> = {
+    "30": entry.p30, "35": entry.p35, "40": entry.p40,
+    "45": entry.p45, "50": entry.p50, "family": entry.pFam,
+  };
+  return map[cat];
 }
 
 export function buildExtras(cat: SizeCategory): Extra[] {
