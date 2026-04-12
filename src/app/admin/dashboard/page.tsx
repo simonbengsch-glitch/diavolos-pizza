@@ -67,9 +67,10 @@ function printOrder(order: Order) {
   const dateStr = date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
   const timeStr = date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
   const itemsHtml = order.items.map((item) => {
-    const lineTotal = ((item.unitPrice ?? 0) * item.quantity).toFixed(2).replace(".", ",");
-    const unitStr = (item.unitPrice ?? 0).toFixed(2).replace(".", ",");
-    const name = item.displayName || item.name;
+    const up = item.price ?? item.unitPrice ?? 0;
+    const lineTotal = (up * item.quantity).toFixed(2).replace(".", ",");
+    const unitStr = up.toFixed(2).replace(".", ",");
+    const name = item.name || item.displayName;
     const lines = name.match(/.{1,38}/g) ?? [name];
     return `
       <div class="item-row"><span>${item.quantity}x ${lines[0]}</span><span>${lineTotal} &euro;</span></div>
@@ -110,6 +111,7 @@ export default function AdminDashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<string>("today");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newOrderAlert, setNewOrderAlert] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
@@ -118,8 +120,27 @@ export default function AdminDashboardPage() {
   const isFirstLoad = useRef(true);
   const router = useRouter();
 
+  const getDateParams = useCallback((range: string) => {
+    const now = new Date();
+    const startOfDay = (d: Date) => { d.setHours(0, 0, 0, 0); return d; };
+    let from: Date | null = null;
+    if (range === "today") from = startOfDay(new Date());
+    else if (range === "yesterday") { from = startOfDay(new Date()); from.setDate(from.getDate() - 1); }
+    else if (range === "week") { from = startOfDay(new Date()); from.setDate(from.getDate() - 7); }
+    else if (range === "month") { from = startOfDay(new Date()); from.setMonth(from.getMonth() - 1); }
+    else if (range === "year") { from = startOfDay(new Date()); from.setFullYear(from.getFullYear() - 1); }
+    const params = new URLSearchParams();
+    if (from) params.set("from", from.toISOString());
+    if (range === "yesterday") {
+      const to = startOfDay(new Date());
+      params.set("to", to.toISOString());
+    }
+    return params.toString() ? `?${params.toString()}` : "";
+  }, []);
+
   const fetchOrders = useCallback(async () => {
-    const res = await fetch("/api/admin/orders");
+    const params = getDateParams(dateRange);
+    const res = await fetch(`/api/admin/orders${params}`);
     if (res.status === 401) { router.push("/admin/login"); return; }
     const data = await res.json();
     const newOrders: Order[] = data.orders || [];
@@ -137,7 +158,7 @@ export default function AdminDashboardPage() {
     }
     setOrders(newOrders);
     setLoading(false);
-  }, [router]);
+  }, [router, dateRange, getDateParams]);
 
   const fetchSettings = useCallback(async () => {
     const res = await fetch("/api/admin/settings");
@@ -361,6 +382,33 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
+        {/* Zeitraum-Filter */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-bold text-dark mr-2">📅 Zeitraum:</span>
+            {[
+              { key: "today",     label: "Heute" },
+              { key: "yesterday", label: "Gestern" },
+              { key: "week",      label: "7 Tage" },
+              { key: "month",     label: "30 Tage" },
+              { key: "year",      label: "1 Jahr" },
+              { key: "all",       label: "Alle" },
+            ].map((r) => (
+              <button
+                key={r.key}
+                onClick={() => { setDateRange(r.key); setLoading(true); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  dateRange === r.key
+                    ? "bg-diavolored text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Statistik-Karten */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -432,7 +480,7 @@ export default function AdminDashboardPage() {
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-sm">
                             <span className="text-dark">{item.quantity}× {item.name}</span>
-                            <span className="font-semibold text-dark">{(item.unitPrice * item.quantity).toFixed(2).replace(".", ",")} €</span>
+                            <span className="font-semibold text-dark">{((item.price ?? item.unitPrice ?? 0) * item.quantity).toFixed(2).replace(".", ",")} €</span>
                           </div>
                         ))}
                         <div className="border-t border-gray-100 pt-2 flex justify-between font-bold">
