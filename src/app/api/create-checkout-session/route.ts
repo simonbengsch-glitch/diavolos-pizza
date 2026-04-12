@@ -85,6 +85,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Checkout Session Error:", error);
     const message = error instanceof Error ? error.message : "Interner Serverfehler";
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json({ error: `Stripe-Fehler: ${message}` }, { status: 500 });
   }
 }

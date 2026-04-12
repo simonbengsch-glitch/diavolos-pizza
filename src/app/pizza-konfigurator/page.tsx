@@ -324,7 +324,7 @@ export default function PizzaKonfiguratorPage() {
                 <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">2</span>
                 Sauce
               </h2>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {SAUCES.map((sauce) => (
                   <button
                     key={sauce}
@@ -335,13 +335,13 @@ export default function PizzaKonfiguratorPage() {
                         : "border-gray-200 text-dark hover:border-gray-300"
                     }`}
                   >
-                    <span className="text-base">
+                    <span className="text-base shrink-0">
                       {sauce === "Tomatensauce" ? "🍅" : sauce === "Pesto" ? "🌿" : sauce === "Trüffel-Pesto" ? "🍄" : sauce === "Frischkäse" ? "🧀" : "⬜"}
                     </span>
                     <span className="flex-1 text-left">{sauce}</span>
-                    <span className="text-xs text-gray-500">
-                      {SAUCE_PRICES[sauce] ? `+${SAUCE_PRICES[sauce].toFixed(2).replace(".", ",")} €` : "0,00 €"}
-                    </span>
+                    {SAUCE_PRICES[sauce] ? (
+                      <span className="text-xs text-gray-500 shrink-0">+{SAUCE_PRICES[sauce].toFixed(2).replace(".", ",")} €</span>
+                    ) : null}
                   </button>
                 ))}
               </div>
@@ -353,7 +353,7 @@ export default function PizzaKonfiguratorPage() {
                 <span className="bg-diavolored text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
                 Käse
               </h2>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {CHEESES.map((cheese) => (
                   <button
                     key={cheese}
@@ -364,13 +364,11 @@ export default function PizzaKonfiguratorPage() {
                         : "border-gray-200 text-dark hover:border-gray-300"
                     }`}
                   >
-                    <span className="text-base">{cheese === "Ohne Käse" ? "🚫" : "🧀"}</span>
+                    <span className="text-base shrink-0">{cheese === "Ohne Käse" ? "🚫" : "🧀"}</span>
                     <span className="flex-1 text-left">{cheese}</span>
-                    <span className="text-xs text-gray-500">
-                      {CHEESE_PRICES[cheese]
-                        ? `+${cheesePriceFor(cheese, sizeCat).toFixed(2).replace(".", ",")} €`
-                        : "0,00 €"}
-                    </span>
+                    {CHEESE_PRICES[cheese] ? (
+                      <span className="text-xs text-gray-500 shrink-0">+{cheesePriceFor(cheese, sizeCat).toFixed(2).replace(".", ",")} €</span>
+                    ) : null}
                   </button>
                 ))}
               </div>
