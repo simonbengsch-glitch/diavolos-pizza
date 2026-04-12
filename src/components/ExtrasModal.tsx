@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Product, Extra, PizzaSize, SelectedExtra, CartItem } from "@/types";
-import { buildExtras, priceForExtraId } from "@/lib/extrasCatalog";
+import { buildExtras, priceForExtraId, getSizeCategory } from "@/lib/extrasCatalog";
 
 interface Props {
   product: Product;
@@ -32,16 +32,17 @@ export default function ExtrasModal({ product, onClose, onAdd }: Props) {
     });
   }, []);
 
-  const isFamilySize = selectedSize?.label?.toLowerCase().includes("famili") ?? false;
+  const sizeCat = getSizeCategory(selectedSize?.label ?? "30 cm");
+  const isFamilySize = sizeCat === "family";
 
   useEffect(() => {
-    setExtras(buildExtras(isFamilySize));
+    setExtras(buildExtras(sizeCat));
     const reprice = (list: SelectedExtra[]): SelectedExtra[] =>
-      list.map((e) => ({ ...e, price: priceForExtraId(e.id, isFamilySize) }));
+      list.map((e) => ({ ...e, price: priceForExtraId(e.id, sizeCat) }));
     setSelectedExtras(reprice);
     setLeftExtras(reprice);
     setRightExtras(reprice);
-  }, [isFamilySize]);
+  }, [sizeCat]);
 
   // Wenn von Familienpizza auf Normal gewechselt: Halb-Halb zurücksetzen
   const handleSizeChange = (size: PizzaSize) => {
