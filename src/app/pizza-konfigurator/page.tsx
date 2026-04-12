@@ -14,9 +14,16 @@ const SAUCE_PRICES: Record<string, number> = {
   "Trüffel-Pesto": 2.00,
 };
 const CHEESES = ["Mozzarella", "Büffelmozzarella", "Ohne Käse"];
-const CHEESE_PRICES: Record<string, number> = {
-  "Büffelmozzarella": 2.80,
+const CHEESE_PRICES: Record<string, { regular: number; family: number }> = {
+  "Mozzarella":       { regular: 2.00, family: 3.00 },
+  "Büffelmozzarella": { regular: 2.80, family: 3.50 },
 };
+
+function cheesePriceFor(cheese: string, isFamily: boolean): number {
+  const entry = CHEESE_PRICES[cheese];
+  if (!entry) return 0;
+  return isFamily ? entry.family : entry.regular;
+}
 const BASE_PRICE = 10.00;
 const SERVICE_FEE = 0;
 const MIN_ORDER = 15.00;
@@ -168,7 +175,7 @@ export default function PizzaKonfiguratorPage() {
 
   const sizeExtraPrice = selectedSize?.extra_price ?? 0;
   const saucePrice = SAUCE_PRICES[selectedSauce] ?? 0;
-  const cheesePrice = CHEESE_PRICES[selectedCheese] ?? 0;
+  const cheesePrice = cheesePriceFor(selectedCheese, isFamilySize);
   const totalPrice = BASE_PRICE + sizeExtraPrice + saucePrice + cheesePrice + extrasPrice;
 
   const buildName = () => {
@@ -352,7 +359,9 @@ export default function PizzaKonfiguratorPage() {
                     <span className="text-base">{cheese === "Ohne Käse" ? "🚫" : "🧀"}</span>
                     <span className="flex-1 text-left">{cheese}</span>
                     <span className="text-xs text-gray-500">
-                      {CHEESE_PRICES[cheese] ? `+${CHEESE_PRICES[cheese].toFixed(2).replace(".", ",")} €` : "0,00 €"}
+                      {CHEESE_PRICES[cheese]
+                        ? `+${cheesePriceFor(cheese, isFamilySize).toFixed(2).replace(".", ",")} €`
+                        : "0,00 €"}
                     </span>
                   </button>
                 ))}
