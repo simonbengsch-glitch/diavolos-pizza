@@ -10,7 +10,14 @@ export async function GET() {
     .select("catalog, updated_at")
     .eq("id", 1)
     .single();
-  if (error) return Response.json({ catalog: null, updated_at: null, needsSetup: true });
+  if (error) {
+    // 42P01 = Tabelle existiert nicht, PGRST116 = kein Ergebnis (Tabelle leer)
+    if (error.code === "42P01" || error.message?.includes("does not exist")) {
+      return Response.json({ catalog: null, updated_at: null, needsSetup: true });
+    }
+    // Tabelle existiert aber ist leer — kein Setup nötig
+    return Response.json({ catalog: null, updated_at: null });
+  }
   return Response.json({ catalog: data?.catalog ?? null, updated_at: data?.updated_at ?? null });
 }
 
