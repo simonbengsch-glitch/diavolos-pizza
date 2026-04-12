@@ -44,21 +44,9 @@ const DEFAULT_SCHEDULE: Record<number, string> = {
 
 function playKitchenBell() {
   try {
-    const ctx = new AudioContext();
-    [0, 0.25, 0.5].forEach((t) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(1046, ctx.currentTime + t);
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + t + 0.3);
-      gain.gain.setValueAtTime(0, ctx.currentTime + t);
-      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 1.2);
-      osc.start(ctx.currentTime + t);
-      osc.stop(ctx.currentTime + t + 1.2);
-    });
+    const audio = new Audio("/sounds/order-bell.mp3");
+    audio.volume = 1.0;
+    audio.play().catch(() => {});
   } catch { /* ignore */ }
 }
 
