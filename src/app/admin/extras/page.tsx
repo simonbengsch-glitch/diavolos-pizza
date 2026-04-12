@@ -26,12 +26,20 @@ export default function AdminExtrasPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
   const router = useRouter();
+
+  const setupSql = `CREATE TABLE IF NOT EXISTS extras_catalog_config (
+  id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  catalog JSONB NOT NULL DEFAULT '[]'::jsonb,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);`;
 
   const loadCatalog = useCallback(async () => {
     const res = await fetch("/api/admin/extras-catalog");
     if (res.status === 401) { router.push("/admin/login"); return; }
     const data = await res.json();
+    if (data.needsSetup) setNeedsSetup(true);
     if (data.catalog && Array.isArray(data.catalog) && data.catalog.length > 0) {
       setCatalog(data.catalog);
       setOriginal(JSON.stringify(data.catalog));
@@ -67,7 +75,11 @@ export default function AdminExtrasPage() {
     });
     const data = await res.json();
     setSaving(false);
-    if (!res.ok) { setError(data.error || "Fehler beim Speichern"); return; }
+    if (!res.ok) {
+      if (data.needsSetup) setNeedsSetup(true);
+      setError(data.error || "Fehler beim Speichern");
+      return;
+    }
     setOriginal(JSON.stringify(catalog));
     setShowPasswordModal(false);
     setPassword("");
@@ -95,9 +107,18 @@ export default function AdminExtrasPage() {
           <p className="text-xs text-gray-400 mb-2">Zuletzt gespeichert: {lastSaved}</p>
         )}
 
+        {needsSetup && (
+          <div className="bg-yellow-50 border border-yellow-300 rounded-2xl p-5 mb-4">
+            <p className="font-bold text-yellow-800 mb-2">⚠️ Datenbank-Tabelle fehlt</p>
+            <p className="text-sm text-yellow-700 mb-3">Damit du Preise speichern kannst, muss einmalig folgendes SQL im <strong>Supabase SQL Editor</strong> ausgeführt werden:</p>
+            <pre className="bg-yellow-100 rounded-xl p-3 text-xs text-yellow-900 overflow-x-auto mb-3 select-all">{setupSql}</pre>
+            <p className="text-xs text-yellow-600">Nach dem Ausführen diese Seite neu laden.</p>
+          </div>
+        )}
+
         {success && (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-4 text-sm text-green-800 font-bold">
-            ✅ Preise erfolgreich gespeichert!
+            ✅ Preise erfolgreich gespeichert! Änderungen sind sofort auf der Hauptseite sichtbar.
           </div>
         )}
 
