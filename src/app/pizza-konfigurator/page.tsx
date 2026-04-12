@@ -201,7 +201,7 @@ export default function PizzaKonfiguratorPage() {
       halfHalf: halfHalfMode
         ? { left: leftExtras.map((e) => ({ id: e.id, name: e.name, price: e.price })), right: rightExtras.map((e) => ({ id: e.id, name: e.name, price: e.price })) }
         : null,
-      unitPrice: totalPrice + SERVICE_FEE,
+      unitPrice: totalPrice,
       quantity: 1,
     };
     setCart((prev) => [...prev, newItem]);
@@ -576,17 +576,11 @@ export default function PizzaKonfiguratorPage() {
                     </div>
                   ))
                 )}
-                {SERVICE_FEE > 0 && (
-                  <div className="flex justify-between text-sm text-gray-400">
-                    <span>Servicegebühr</span>
-                    <span>+{SERVICE_FEE.toFixed(2).replace(".", ",")} €</span>
-                  </div>
-                )}
               </div>
 
               <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-xl mb-4">
                 <span>Gesamt</span>
-                <span className="text-diavologreen">{(totalPrice + SERVICE_FEE).toFixed(2).replace(".", ",")} €</span>
+                <span className="text-diavologreen">{totalPrice.toFixed(2).replace(".", ",")} €</span>
               </div>
 
               {added ? (
@@ -598,7 +592,7 @@ export default function PizzaKonfiguratorPage() {
                   onClick={handleAddToCart}
                   className="w-full bg-diavolored text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors shadow-lg text-lg"
                 >
-                  🛒 In den Warenkorb — {(totalPrice + SERVICE_FEE).toFixed(2).replace(".", ",")} €
+                  🛒 In den Warenkorb — {totalPrice.toFixed(2).replace(".", ",")} €
                 </button>
               )}
 
@@ -659,7 +653,7 @@ export default function PizzaKonfiguratorPage() {
           )}
           <div className="flex justify-between items-center mb-5">
             <span className="font-bold text-lg text-dark">Gesamtsumme:</span>
-            <span className="font-bold text-2xl text-dark">{cartTotal.toFixed(2).replace(".", ",")} €</span>
+            <span className="font-bold text-2xl text-dark">{(cartTotal + SERVICE_FEE).toFixed(2).replace(".", ",")} €</span>
           </div>
           <button
             disabled={cartTotal < MIN_ORDER}
@@ -672,7 +666,7 @@ export default function PizzaKonfiguratorPage() {
       </div>
 
       {/* CHECKOUT MODAL */}
-      {checkoutOpen && <CheckoutModal cart={cart} total={cartTotal} onClose={() => setCheckoutOpen(false)} onSubmit={handleCheckout} />}
+      {checkoutOpen && <CheckoutModal cart={cart} total={cartTotal + SERVICE_FEE} onClose={() => setCheckoutOpen(false)} onSubmit={handleCheckout} />}
     </div>
   );
 }
