@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Product, Extra, PizzaSize, SelectedExtra, CartItem } from "@/types";
-import { buildExtras, priceForExtraId, getSizeCategory } from "@/lib/extrasCatalog";
+import { buildExtras, priceForExtraId, getSizeCategory, buildExtrasFromDb, priceForExtraIdFromDb } from "@/lib/extrasCatalog";
 
 interface Props {
   product: Product;
@@ -19,8 +19,12 @@ export default function ExtrasModal({ product, onClose, onAdd }: Props) {
   const [leftExtras, setLeftExtras] = useState<SelectedExtra[]>([]);
   const [rightExtras, setRightExtras] = useState<SelectedExtra[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbCatalog, setDbCatalog] = useState<Record<string, unknown>[] | null>(null);
 
   useEffect(() => {
+    fetch("/api/extras-catalog").then((r) => r.json()).then((d) => {
+      if (d.catalog && Array.isArray(d.catalog) && d.catalog.length > 0) setDbCatalog(d.catalog);
+    }).catch(() => {});
     fetch("/api/pizza-sizes").then((r) => r.json()).then((sizeData) => {
       const sizeList: PizzaSize[] = (sizeData.sizes || []).map((s: PizzaSize) => ({
         ...s,
@@ -36,13 +40,17 @@ export default function ExtrasModal({ product, onClose, onAdd }: Props) {
   const isFamilySize = sizeCat === "family";
 
   useEffect(() => {
-    setExtras(buildExtras(sizeCat));
+    const extras = dbCatalog ? buildExtrasFromDb(dbCatalog, sizeCat) : buildExtras(sizeCat);
+    setExtras(extras);
     const reprice = (list: SelectedExtra[]): SelectedExtra[] =>
-      list.map((e) => ({ ...e, price: priceForExtraId(e.id, sizeCat) }));
+      list.map((e) => ({
+        ...e,
+        price: dbCatalog ? priceForExtraIdFromDb(dbCatalog, e.id, sizeCat) : priceForExtraId(e.id, sizeCat),
+      }));
     setSelectedExtras(reprice);
     setLeftExtras(reprice);
     setRightExtras(reprice);
-  }, [sizeCat]);
+  }, [sizeCat, dbCatalog]);
 
   // Wenn von Familienpizza auf Normal gewechselt: Halb-Halb zurücksetzen
   const handleSizeChange = (size: PizzaSize) => {

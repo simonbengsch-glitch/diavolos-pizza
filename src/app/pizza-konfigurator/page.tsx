@@ -5,7 +5,7 @@ import Image from "next/image";
 import { CartItem, CustomerDetails, Extra, PizzaSize } from "@/types";
 import PizzaVisual from "@/components/PizzaVisual";
 import CheckoutModal from "@/components/CheckoutModal";
-import { buildExtras, priceForExtraId, getSizeCategory, type SizeCategory } from "@/lib/extrasCatalog";
+import { buildExtras, priceForExtraId, getSizeCategory, buildExtrasFromDb, priceForExtraIdFromDb, type SizeCategory } from "@/lib/extrasCatalog";
 
 const SAUCES = ["Tomatensauce", "Ohne Sauce", "Pesto", "Frischkäse", "Trüffel-Pesto"];
 const SAUCE_PRICES: Record<string, number> = {
@@ -57,6 +57,7 @@ export default function PizzaKonfiguratorPage() {
     try { return JSON.parse(sessionStorage.getItem("pizza_cart") || "[]"); } catch { return []; }
   });
   const [cartBounce, setCartBounce] = useState(false);
+  const [dbCatalog, setDbCatalog] = useState<Record<string, unknown>[] | null>(null);
 
   // Cart sync mit sessionStorage
   useEffect(() => {
@@ -104,6 +105,9 @@ export default function PizzaKonfiguratorPage() {
   };
 
   useEffect(() => {
+    fetch("/api/extras-catalog").then((r) => r.json()).then((d) => {
+      if (d.catalog && Array.isArray(d.catalog) && d.catalog.length > 0) setDbCatalog(d.catalog);
+    }).catch(() => {});
     fetch("/api/pizza-sizes").then((r) => r.json()).then((sizeData) => {
       const sizeList: PizzaSize[] = (sizeData.sizes || []).map((s: PizzaSize) => {
         const override = SIZE_TOTAL_OVERRIDE.find((o) => o.match.test(s.label));
@@ -122,13 +126,17 @@ export default function PizzaKonfiguratorPage() {
   const isFamilySize = sizeCat === "family";
 
   useEffect(() => {
-    setExtras(buildExtras(sizeCat));
+    const extras = dbCatalog ? buildExtrasFromDb(dbCatalog, sizeCat) : buildExtras(sizeCat);
+    setExtras(extras);
     const reprice = (list: Extra[]) =>
-      list.map((e) => ({ ...e, price: priceForExtraId(e.id, sizeCat) }));
+      list.map((e) => ({
+        ...e,
+        price: dbCatalog ? priceForExtraIdFromDb(dbCatalog, e.id, sizeCat) : priceForExtraId(e.id, sizeCat),
+      }));
     setSelectedExtras(reprice);
     setLeftExtras(reprice);
     setRightExtras(reprice);
-  }, [sizeCat]);
+  }, [sizeCat, dbCatalog]);
 
   const handleSizeChange = (size: PizzaSize) => {
     setSelectedSize(size);
