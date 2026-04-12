@@ -15,7 +15,6 @@ const SAUCE_PRICES: Record<string, number> = {
 };
 const CHEESES = ["Mozzarella", "Büffelmozzarella", "Ohne Käse"];
 const CHEESE_PRICES: Record<string, Record<SizeCategory, number>> = {
-  "Mozzarella":       { "30": 1.00, "35": 1.50, "40": 2.00, "45": 2.00, "50": 2.80, family: 3.00 },
   "Büffelmozzarella": { "30": 1.50, "35": 2.00, "40": 2.50, "45": 2.80, "50": 3.00, family: 3.50 },
 };
 

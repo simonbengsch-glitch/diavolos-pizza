@@ -46,7 +46,7 @@ export default function AdminSizesPage() {
     fetchSizes();
   };
 
-  const BASE_PRICE = 9.00;
+  const BASE_PRICE = 10.00;
 
   return (
     <div className="min-h-screen bg-gray-100">
