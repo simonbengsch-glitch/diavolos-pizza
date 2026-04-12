@@ -7,6 +7,9 @@ type CatalogEntry = {
   priceFamily: number;
 };
 
+// Betreiber-Preisliste:
+// priceRegular = runde Pizzen (ø 30–50 cm)
+// priceFamily  = Familienpizza 40/60 cm
 export const EXTRAS_CATALOG: CatalogEntry[] = [
   { id: "ananas",            name: "Ananas",           priceRegular: 1.50, priceFamily: 2.50 },
   { id: "artischocken",      name: "Artischocken",     priceRegular: 1.50, priceFamily: 2.50 },
