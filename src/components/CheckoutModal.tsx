@@ -173,7 +173,7 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
               </button>
             </div>
             {paymentType === "in_person" && (
-              <p className="text-xs text-gray-400 mt-2 text-center">Bar oder Karte beim {isDelivery ? "Fahrer" : "Abholen"}</p>
+              <p className="text-xs text-gray-400 mt-2 text-center">Barzahlung beim {isDelivery ? "Fahrer" : "Abholen"}</p>
             )}
           </div>
 

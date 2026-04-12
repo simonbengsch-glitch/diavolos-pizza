@@ -96,16 +96,24 @@ export default function HomePage() {
     }
 
     // Online-Bezahlung: Stripe Checkout
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cart, customer: details }),
-    });
-    const data = await res.json();
-    if (data.url) {
-      sessionStorage.removeItem("pizza_cart");
-      window.location.href = data.url;
-    } else alert("Fehler beim Erstellen der Zahlung. Bitte versuche es erneut.");
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart, customer: details }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        sessionStorage.removeItem("pizza_cart");
+        window.location.href = data.url;
+      } else {
+        console.error("Stripe Checkout Error:", data.error);
+        alert(data.error || "Fehler beim Erstellen der Zahlung. Bitte versuche es erneut.");
+      }
+    } catch (err) {
+      console.error("Checkout fetch error:", err);
+      alert("Verbindungsfehler. Bitte versuche es erneut.");
+    }
   };
 
   const filteredProducts = products.filter((p) => p.category === activeCategory);

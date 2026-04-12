@@ -132,18 +132,23 @@ export default function AdminDashboardPage() {
     if (res.status === 401) { router.push("/admin/login"); return; }
     const data = await res.json();
     const newOrders: Order[] = data.orders || [];
-    if (isFirstLoad.current) {
-      newOrders.forEach((o) => knownOrderIds.current.add(o.id));
-      isFirstLoad.current = false;
-    } else {
-      const incoming = newOrders.filter((o) => !knownOrderIds.current.has(o.id));
-      if (incoming.length > 0) {
-        incoming.forEach((o) => knownOrderIds.current.add(o.id));
-        playKitchenBell();
-        setNewOrderAlert(true);
-        setTimeout(() => setNewOrderAlert(false), 5000);
+    let hasNewOrder = false;
+    newOrders.forEach((o) => {
+      if (!knownOrderIds.current.has(o.id)) {
+        // Nur Sound abspielen wenn die Bestellung wirklich gerade reingekommen ist (< 90s alt)
+        const isRecent = Date.now() - new Date(o.created_at).getTime() < 90_000;
+        if (!isFirstLoad.current && isRecent) {
+          hasNewOrder = true;
+        }
+        knownOrderIds.current.add(o.id);
       }
+    });
+    if (hasNewOrder) {
+      playKitchenBell();
+      setNewOrderAlert(true);
+      setTimeout(() => setNewOrderAlert(false), 5000);
     }
+    isFirstLoad.current = false;
     setOrders(newOrders);
     setLoading(false);
   }, [router, dateRange, getDateParams]);

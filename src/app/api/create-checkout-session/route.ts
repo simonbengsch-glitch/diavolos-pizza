@@ -3,7 +3,12 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { CartItem, CustomerDetails } from "@/types";
 
 export async function POST(request: Request) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error("STRIPE_SECRET_KEY ist nicht gesetzt!");
+    return Response.json({ error: "Stripe ist nicht konfiguriert" }, { status: 500 });
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
     const body = await request.json();
@@ -15,7 +20,10 @@ export async function POST(request: Request) {
     }
 
     const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").trim();
-    const address = `${customer.street}, ${customer.zip} ${customer.city}`;
+    const isPickup = customer.orderType === "pickup";
+    const address = isPickup
+      ? "Abholung – Am Dachsberg 4, 85049 Ingolstadt"
+      : `${customer.street}, ${customer.zip} ${customer.city}`;
     const total = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
     // Stripe Line Items erstellen
@@ -43,13 +51,15 @@ export async function POST(request: Request) {
         notes: customer.notes || "",
       },
       payment_intent_data: {
-        description: `Diavolo's Pizza – Lieferung an ${address}`,
+        description: isPickup
+          ? `Diavolo's Pizza – Abholung`
+          : `Diavolo's Pizza – Lieferung an ${address}`,
       },
     });
 
     // Bestellung in Supabase speichern
     const supabase = createAdminClient();
-    await supabase.from("orders").insert({
+    const { error: dbError } = await supabase.from("orders").insert({
       stripe_session_id: session.id,
       customer_name: customer.name,
       customer_email: customer.email,
@@ -63,11 +73,18 @@ export async function POST(request: Request) {
       total_amount: Math.round(total * 100),
       status: "pending",
       notes: customer.notes || null,
+      order_type: customer.orderType,
+      payment_type: customer.paymentType,
     });
+
+    if (dbError) {
+      console.error("Supabase insert error:", dbError);
+    }
 
     return Response.json({ url: session.url });
   } catch (error) {
     console.error("Checkout Session Error:", error);
-    return Response.json({ error: "Interner Serverfehler" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Interner Serverfehler";
+    return Response.json({ error: message }, { status: 500 });
   }
 }
