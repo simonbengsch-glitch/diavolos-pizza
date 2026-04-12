@@ -50,6 +50,7 @@ export interface CartItem {
   extras: SelectedExtra[];
   halfHalf?: HalfHalf | null;
   unitPrice: number;
+  price?: number;
   quantity: number;
 }
 

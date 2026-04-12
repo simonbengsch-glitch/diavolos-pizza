@@ -94,28 +94,27 @@ export function priceForExtraId(id: string, cat: SizeCategory): number {
   return priceOf(entry, cat);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function dbPriceOf(row: any, cat: SizeCategory): number {
+type DbCatalogRow = Record<string, unknown>;
+
+function dbPriceOf(row: DbCatalogRow, cat: SizeCategory): number {
   const map: Record<SizeCategory, string> = {
     "30": "p30", "35": "p35", "40": "p40", "45": "p45", "50": "p50", "family": "pFam",
   };
   return Number(row[map[cat]]) || 0;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildExtrasFromDb(catalog: any[], cat: SizeCategory): Extra[] {
+export function buildExtrasFromDb(catalog: DbCatalogRow[], cat: SizeCategory): Extra[] {
   return catalog.map((e, i) => ({
-    id: e.id,
-    name: e.name,
+    id: String(e.id),
+    name: String(e.name),
     price: dbPriceOf(e, cat),
     is_available: true,
     sort_order: i + 1,
   }));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function priceForExtraIdFromDb(catalog: any[], id: string, cat: SizeCategory): number {
-  const entry = catalog.find((e) => e.id === id);
+export function priceForExtraIdFromDb(catalog: DbCatalogRow[], id: string, cat: SizeCategory): number {
+  const entry = catalog.find((e) => String(e.id) === id);
   if (!entry) return 0;
   return dbPriceOf(entry, cat);
 }
