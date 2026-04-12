@@ -24,7 +24,7 @@ function cheesePriceFor(cheese: string, cat: SizeCategory): number {
   return entry[cat];
 }
 const BASE_PRICE = 10.00;
-const SERVICE_FEE = 0;
+const SERVICE_FEE = 0.99;
 const MIN_ORDER = 15.00;
 
 // Gewünschte Gesamtpreise je Größe (Betreiber-Preisliste)
