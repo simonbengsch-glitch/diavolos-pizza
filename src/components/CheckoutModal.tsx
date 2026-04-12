@@ -56,6 +56,10 @@ export default function CheckoutModal({ cart, total, onClose, onSubmit }: Props)
                 <span className="font-semibold text-dark">{(item.unitPrice * item.quantity).toFixed(2).replace(".", ",")} €</span>
               </div>
             ))}
+            <div className="flex justify-between text-sm text-gray-400 mt-2">
+              <span>Servicegebühr</span>
+              <span>0,99 €</span>
+            </div>
             <div className="border-t border-gray-200 mt-3 pt-3 flex justify-between font-bold">
               <span>Gesamt</span>
               <span className="text-diavologreen">{total.toFixed(2).replace(".", ",")} €</span>
