@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/server";
 import { CartItem, CustomerDetails } from "@/types";
+import { repriceCart, PricingError } from "@/lib/pricing";
 
 export async function POST(request: Request) {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -15,8 +16,15 @@ export async function POST(request: Request) {
     const cart: CartItem[] = body.cart;
     const customer: CustomerDetails = body.customer;
 
-    if (!cart || cart.length === 0) {
-      return Response.json({ error: "Warenkorb ist leer" }, { status: 400 });
+    // Preise frisch aus der Datenbank: Admin-Änderungen schlagen sofort in Stripe durch
+    let priced;
+    try {
+      priced = await repriceCart(cart);
+    } catch (err) {
+      if (err instanceof PricingError) {
+        return Response.json({ error: err.message }, { status: err.status });
+      }
+      throw err;
     }
 
     const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").trim();
@@ -24,10 +32,9 @@ export async function POST(request: Request) {
     const address = isPickup
       ? "Abholung – Am Dachsberg 4, 85049 Ingolstadt"
       : `${customer.street}, ${customer.zip} ${customer.city}`;
-    const total = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const total = priced.total;
 
-    // Stripe Line Items erstellen
-    const lineItems = cart.map((item) => ({
+    const lineItems = priced.items.map((item) => ({
       price_data: {
         currency: "eur",
         product_data: { name: item.displayName },
@@ -57,7 +64,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // Bestellung in Supabase speichern
+    // Bestellung in Supabase speichern (mit serverseitig validierten Preisen)
     const supabase = createAdminClient();
     const { error: dbError } = await supabase.from("orders").insert({
       stripe_session_id: session.id,
@@ -65,7 +72,7 @@ export async function POST(request: Request) {
       customer_email: customer.email,
       customer_phone: customer.phone,
       customer_address: address,
-      items: cart.map((item) => ({
+      items: priced.items.map((item) => ({
         name: item.displayName,
         price: item.unitPrice,
         quantity: item.quantity,

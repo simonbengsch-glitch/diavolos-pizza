@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/auth";
+import { isProtectedAdmin } from "@/lib/protectedAdmin";
 
 export async function GET() {
   if (!(await isAdmin())) {
@@ -19,6 +20,7 @@ export async function GET() {
       name: u.user_metadata?.name || "",
       role: u.user_metadata?.role,
       created_at: u.created_at,
+      is_protected: isProtectedAdmin(u.email),
     }));
 
   return Response.json({ staff });

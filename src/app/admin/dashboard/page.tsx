@@ -267,7 +267,6 @@ export default function AdminDashboardPage() {
           <a href="/admin/extras" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors" title="Beläge verwalten & als ausverkauft markieren">🧀 Beläge</a>
           <a href="/admin/sizes" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors" title="Pizzagrößen & Aufpreise">📏 Größen</a>
           <a href="/admin/mitarbeiter" className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors">👤 Mitarbeiter</a>
-          <button onClick={fetchOrders} className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-xl text-sm transition-colors" title="Aktualisieren">🔄</button>
           <button onClick={logout} className="bg-diavolored hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">Abmelden</button>
         </div>
       </header>

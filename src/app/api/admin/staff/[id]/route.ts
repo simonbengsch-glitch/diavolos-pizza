@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/auth";
+import { isProtectedAdmin } from "@/lib/protectedAdmin";
 
 export async function PATCH(
   request: Request,
@@ -14,13 +15,20 @@ export async function PATCH(
 
   const supabase = createAdminClient();
 
+  const { data: existing } = await supabase.auth.admin.getUserById(id);
+  if (isProtectedAdmin(existing?.user?.email)) {
+    return Response.json(
+      { error: "Dieser Admin-Account ist geschützt und kann nicht bearbeitet werden." },
+      { status: 403 }
+    );
+  }
+
   const updates: { email?: string; password?: string; user_metadata?: Record<string, string> } = {};
   if (email) updates.email = email.toLowerCase().trim();
   if (password) updates.password = password;
 
   // Metadaten zusammenführen
   if (role || name) {
-    const { data: existing } = await supabase.auth.admin.getUserById(id);
     updates.user_metadata = {
       ...existing?.user?.user_metadata,
       ...(role ? { role } : {}),
@@ -48,6 +56,15 @@ export async function DELETE(
 
   const { id } = await params;
   const supabase = createAdminClient();
+
+  const { data: existing } = await supabase.auth.admin.getUserById(id);
+  if (isProtectedAdmin(existing?.user?.email)) {
+    return Response.json(
+      { error: "Dieser Admin-Account ist geschützt und kann nicht gelöscht werden." },
+      { status: 403 }
+    );
+  }
+
   const { error } = await supabase.auth.admin.deleteUser(id);
 
   if (error) return Response.json({ error: error.message }, { status: 500 });

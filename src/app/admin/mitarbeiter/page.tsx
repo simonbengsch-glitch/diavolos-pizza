@@ -9,6 +9,7 @@ type Staff = {
   name: string;
   role: "admin" | "driver";
   created_at: string;
+  is_protected?: boolean;
 };
 
 type FormData = { name: string; email: string; password: string; role: "admin" | "driver" };
@@ -200,24 +201,38 @@ function Section({
         <div className="divide-y divide-gray-100">
           {members.map((s) => (
             <div key={s.id} className="flex items-center justify-between px-5 py-4">
-              <div>
-                <p className="font-semibold text-dark">{s.name}</p>
-                <p className="text-sm text-gray-400">{s.email}</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-dark truncate">{s.name}</p>
+                  {s.is_protected && (
+                    <span
+                      className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      title="Haupt-Admin: kann nicht bearbeitet oder gelöscht werden"
+                    >
+                      🔒 Geschützt
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-400 truncate">{s.email}</p>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onEdit(s)}
-                  className="bg-gray-100 hover:bg-gray-200 text-dark px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
-                >
-                  Bearbeiten
-                </button>
-                <button
-                  onClick={() => onDelete(s.id, s.name)}
-                  className="bg-red-100 hover:bg-red-200 text-diavolored px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
-                >
-                  Löschen
-                </button>
-              </div>
+              {s.is_protected ? (
+                <span className="text-xs text-gray-400 italic">Haupt-Admin</span>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onEdit(s)}
+                    className="bg-gray-100 hover:bg-gray-200 text-dark px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Bearbeiten
+                  </button>
+                  <button
+                    onClick={() => onDelete(s.id, s.name)}
+                    className="bg-red-100 hover:bg-red-200 text-diavolored px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Löschen
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

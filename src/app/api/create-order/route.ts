@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { CartItem, CustomerDetails } from "@/types";
+import { repriceCart, PricingError } from "@/lib/pricing";
 
 // Für Abholung + Vor-Ort-Zahlung (kein Stripe)
 export async function POST(request: Request) {
@@ -8,11 +9,18 @@ export async function POST(request: Request) {
     const cart: CartItem[] = body.cart;
     const customer: CustomerDetails = body.customer;
 
-    if (!cart || cart.length === 0) {
-      return Response.json({ error: "Warenkorb ist leer" }, { status: 400 });
+    // Preise frisch aus der Datenbank: identische Logik wie bei Stripe-Checkout
+    let priced;
+    try {
+      priced = await repriceCart(cart);
+    } catch (err) {
+      if (err instanceof PricingError) {
+        return Response.json({ error: err.message }, { status: err.status });
+      }
+      throw err;
     }
 
-    const total = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    const total = priced.total;
     const address = customer.orderType === "pickup"
       ? "Abholung – Am Dachsberg 4, 85049 Ingolstadt"
       : `${customer.street}, ${customer.zip} ${customer.city}`;
@@ -24,7 +32,7 @@ export async function POST(request: Request) {
       customer_email: customer.email,
       customer_phone: customer.phone,
       customer_address: address,
-      items: cart.map((item) => ({
+      items: priced.items.map((item) => ({
         name: item.displayName,
         price: item.unitPrice,
         quantity: item.quantity,
